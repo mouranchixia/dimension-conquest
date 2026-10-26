@@ -5267,20 +5267,20 @@ function render(){
    Replaces the previous neon HUD without touching game logic.
    ============================================================ */
 const SK = {
-  ink: '#06080f',
-  ink2: 'rgba(8,11,18,.94)',
-  paper: '#f0e6d0',
-  paperDim: 'rgba(240,230,208,.8)',
-  paperFaint: 'rgba(240,230,208,.5)',
-  gold: '#d1af72',
-  goldDim: 'rgba(209,175,114,.6)',
-  goldFaint: 'rgba(209,175,114,.26)',
-  red: '#b55a4d',
-  violet: '#8d7ab5',
-  green: '#9db98a'
+  ink: '#030611',
+  ink2: 'rgba(5,10,20,.92)',
+  paper: '#dcf8ff',
+  paperDim: 'rgba(190,235,250,.86)',
+  paperFaint: 'rgba(145,205,228,.55)',
+  gold: '#57e6ff',
+  goldDim: 'rgba(87,230,255,.68)',
+  goldFaint: 'rgba(87,230,255,.24)',
+  red: '#ff5d7e',
+  violet: '#a88cff',
+  green: '#6cf0c2'
 };
-const SK_SERIF = 'Georgia, "Times New Roman", "SimSun", serif';
-const SK_SANS = '"Microsoft YaHei", "Noto Sans SC", "Segoe UI", sans-serif';
+const SK_SERIF = '"Bahnschrift", "DIN Alternate", "Segoe UI", "Microsoft YaHei", sans-serif';
+const SK_SANS = '"Bahnschrift", "Segoe UI", "Microsoft YaHei", sans-serif';
 const SK_MONO = 'Consolas, "Courier New", monospace';
 
 function skFont(size, weight, mono){
@@ -5292,8 +5292,8 @@ function skText(s, x, y, size, color, align, weight, mono, tracking){
   ctx.save();
   ctx.font = skFont(size, weight, mono);
   ctx.fillStyle = color || SK.paper;
-  ctx.shadowColor = 'rgba(0,0,0,.55)';
-  ctx.shadowBlur = 1.5;
+  ctx.shadowColor = size >= 17 ? 'rgba(87,230,255,.32)' : 'rgba(0,0,0,.6)';
+  ctx.shadowBlur = size >= 17 ? 8 : 1.5;
   ctx.shadowOffsetY = .5;
   ctx.textAlign = tracking ? 'left' : (align || 'left');
   ctx.textBaseline = 'middle';
@@ -5335,6 +5335,99 @@ function skStar(cx, cy, r, color, a){
   ctx.strokeStyle = color; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(0, -r); ctx.lineTo(0, r); ctx.moveTo(-r, 0); ctx.lineTo(r, 0); ctx.stroke();
   ctx.beginPath(); ctx.arc(0, 0, r * .28, 0, TAU); ctx.stroke();
+  ctx.restore();
+}
+
+/* procedural galaxies: one distinct silhouette per chapter */
+const GALAXY_ART = {
+  1: { type: 'spiral',    core: '#e8fbff', a: '#48a7ff', b: '#9be9ff', halo: 'rgba(40,120,255,.22)' },
+  2: { type: 'elliptical', core: '#fff0d0', a: '#ff6b3d', b: '#ffbe6a', halo: 'rgba(255,90,30,.2)' },
+  3: { type: 'lenticular', core: '#ffffff', a: '#79e8ff', b: '#c2f8ff', halo: 'rgba(80,220,255,.18)' },
+  4: { type: 'irregular',  core: '#e8ffd2', a: '#78d95e', b: '#c58bff', halo: 'rgba(90,220,120,.17)' },
+  5: { type: 'ring',       core: '#eaffff', a: '#57e6ff', b: '#d2ae63', halo: 'rgba(80,200,220,.18)' },
+  6: { type: 'barred',     core: '#fff1c8', a: '#ffcb62', b: '#8c6cff', halo: 'rgba(255,190,90,.2)' }
+};
+function skRnd(i, seed){
+  const v = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453;
+  return v - Math.floor(v);
+}
+function skGalaxy(kind, cx, cy, r, t, alpha){
+  const p = GALAXY_ART[kind] || GALAXY_ART[1];
+  ctx.save();
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  const halo = ctx.createRadialGradient(cx, cy, r * .08, cx, cy, r * 1.35);
+  halo.addColorStop(0, p.halo); halo.addColorStop(.55, p.halo); halo.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, cy, r * 1.35, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.clip();
+  const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  bg.addColorStop(0, 'rgba(8,18,38,.2)'); bg.addColorStop(1, 'rgba(2,5,15,.96)');
+  ctx.fillStyle = bg; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+
+  ctx.globalCompositeOperation = 'lighter';
+  const N = Math.max(55, Math.round(r * 2.1));
+  for (let i = 0; i < N; i++) {
+    const u = (i + .5) / N;
+    const q1 = skRnd(i, kind), q2 = skRnd(i + 73, kind);
+    let px, py, s, col;
+    if (p.type === 'spiral') {
+      const arm = i % 2, uu = Math.pow(u, .78);
+      const ang = arm * Math.PI + uu * 4.8 + (q1 - .5) * .5 + t * .04;
+      const rr = r * (.1 + uu * .9) * (.88 + q2 * .18);
+      px = cx + Math.cos(ang) * rr;
+      py = cy + Math.sin(ang) * rr * (.42 + q1 * .12);
+      s = .7 + q2 * 1.3; col = uu < .28 ? p.core : (arm ? p.b : p.a);
+    } else if (p.type === 'elliptical') {
+      const ang = q1 * TAU, rr = r * Math.sqrt(q2) * .82;
+      px = cx + Math.cos(ang) * rr;
+      py = cy + Math.sin(ang) * rr * (.62 + q1 * .12);
+      s = .8 + q2 * 1.2; col = q2 < .3 ? p.core : (i % 3 ? p.a : p.b);
+    } else if (p.type === 'lenticular') {
+      const ang = q1 * TAU, rr = r * (.25 + Math.sqrt(q2) * .7);
+      px = cx + Math.cos(ang) * rr;
+      py = cy + Math.sin(ang) * rr * .28;
+      s = .65 + q2 * 1.1; col = q2 < .22 ? p.core : (i % 4 ? p.a : p.b);
+    } else if (p.type === 'irregular') {
+      const cl = i % 3;
+      const ox = (cl - 1) * r * .3, oy = (cl === 1 ? -.18 : .14) * r;
+      const ang = q1 * TAU, rr = r * Math.sqrt(q2) * .4;
+      px = cx + ox + Math.cos(ang) * rr;
+      py = cy + oy + Math.sin(ang) * rr * .8;
+      s = .8 + q2 * 1.5; col = cl === 1 ? p.b : p.a;
+    } else if (p.type === 'ring') {
+      const ang = q1 * TAU, rr = r * (.5 + q2 * .32);
+      px = cx + Math.cos(ang) * rr;
+      py = cy + Math.sin(ang) * rr * .46;
+      s = .7 + q2 * 1.2; col = q2 < .18 ? p.b : p.a;
+    } else {
+      const bar = q2 < .35;
+      const ang = bar ? (q1 < .5 ? 0 : Math.PI) : q1 * TAU;
+      const rr = bar ? r * Math.abs(q1 - .5) * 1.5 : r * (.4 + q2 * .5);
+      px = cx + Math.cos(ang) * rr;
+      py = cy + Math.sin(ang) * rr * (bar ? .14 : .5);
+      s = .8 + q2 * 1.3; col = q2 < .22 ? p.core : (i % 2 ? p.a : p.b);
+    }
+    ctx.fillStyle = col;
+    ctx.fillRect(px, py, s, s);
+  }
+  /* dust / arm ridges */
+  if (p.type === 'spiral' || p.type === 'barred') {
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = 'rgba(2,6,14,.45)'; ctx.lineWidth = Math.max(1, r * .04);
+    for (let arm = 0; arm < 2; arm++) {
+      ctx.beginPath();
+      for (let i = 0; i <= 20; i++) {
+        const u = i / 20, ang = arm * Math.PI + u * 4.8 + t * .04;
+        const rr = r * (.15 + u * .82);
+        const x = cx + Math.cos(ang) * rr, y = cy + Math.sin(ang) * rr * .46;
+        if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    }
+  }
+  const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * .34);
+  core.addColorStop(0, p.core); core.addColorStop(.45, p.a); core.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.fillStyle = core; ctx.beginPath(); ctx.arc(cx, cy, r * .34, 0, TAU); ctx.fill();
   ctx.restore();
 }
 function skFrame(x, y, w, h, cut, stroke, fill, alpha){
@@ -5427,11 +5520,18 @@ function skArc(cx, cy, r, frac, color, lw){
 function skBackdrop(t){
   drawWorld(t);
   ctx.save();
-  ctx.fillStyle = 'rgba(4,6,11,.8)';
+  ctx.fillStyle = 'rgba(2,6,14,.84)';
   ctx.fillRect(0, 0, W, H);
+  /* holographic chart grid */
+  ctx.strokeStyle = 'rgba(87,230,255,.045)';
+  ctx.lineWidth = 1;
+  for (let x = 20; x < W; x += 48) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 24; y < H; y += 48) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(87,230,255,.022)';
+  for (let y = 0; y < H; y += 3) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
   const vg = ctx.createRadialGradient(480, 300, 90, 480, 300, 620);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
-  vg.addColorStop(1, 'rgba(0,0,0,.45)');
+  vg.addColorStop(1, 'rgba(0,0,0,.5)');
   ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
   ctx.restore();
 }
@@ -5482,7 +5582,7 @@ function skTop(g){
     skText(stats[i][1], x, 34, 14, SK.paper, 'left', 400, true, .6);
   }
 
-  const bx = 900;
+  const bx = 858;
   const acts = [
     ['pause', g.paused ? '▶' : 'Ⅱ', () => togglePause(), g.paused ? '继续（空格）' : '暂停（空格）'],
     ['speed', g.speed + '×', () => cycleSpeed(), '切换倍速（S）'],
@@ -5554,7 +5654,7 @@ function skBuildRail(g){
   skText('ARMORY', x + w / 2, y - 13, 6, SK.paperFaint, 'center', 400, true, 2.2);
 }
 function skSkillRail(g){
-  const x = 916, y = 108, gap = 61;
+  const x = 890, y = 108, gap = 61;
   skText('SIGILS', x - 3, y - 23, 6.5, SK.goldDim, 'center', 400, true, 2.2);
   for (let i = 0; i < SKILLS.length; i++) {
     const sk = SKILLS[i], yy = y + i * gap;
@@ -5704,7 +5804,7 @@ function skMenu(){
   for (let y = 110; y < 470; y += 24) skLine(84, y, 92, y, SK.goldFaint, 1);
 
   skText('维 度 征 服', 112, 145, 46, SK.paper, 'left', 400, false, 8);
-  skText('AN ASTRAL CODEX OF SIX REALMS', 114, 188, 7, SK.gold, 'left', 400, true, 2.4);
+  skText('ASTRAL NAVIGATOR · SIX REALMS', 114, 188, 7, SK.gold, 'left', 400, true, 2.4);
   skText('六个章节 · 十八个小关 · 每小关六波', 114, 232, 11, SK.paperDim, 'left', 400, false, .8);
   const cc = campaignClearCount(), total = CAMPAIGN.chapters * CAMPAIGN.stagesPerChapter;
   skText('已征服 ' + cc + ' / ' + total + '   ·   已解锁炮塔 ' + PROGRESS.unlocked.length + ' / 24   ·   历史最佳 ' + fmt(PROGRESS.best), 114, 254, 8, SK.paperFaint, 'left', 400, true, .5);
@@ -5718,33 +5818,23 @@ function skMenu(){
   const cl = ch ? '深渊试炼' : '深渊试炼 · 未解锁';
   skLink('skin_menu_challenge', cl, 108, 380, 11, ch ? SK.red : SK.paperDim, () => { if (ch) openChallenges(); else { setBanner('试炼未解锁', '通关 3 个战役小关后开启', '#b55a4d', 2); sfx('error'); } }, ch ? '高强度敌群与终维首领' : '通关 3 个战役小关后开启', 'left', !ch);
 
-  /* planetary body */
-  const cx = 704, cy = 238, r = 74;
-  const gr = ctx.createRadialGradient(cx - 20, cy - 24, 8, cx, cy, r);
-  gr.addColorStop(0, rgba(d.color, .9));
-  gr.addColorStop(.55, 'rgba(40,30,60,.9)');
-  gr.addColorStop(1, 'rgba(6,8,14,.96)');
-  ctx.save(); ctx.fillStyle = gr;
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fill();
-  ctx.clip();
-  ctx.strokeStyle = 'rgba(232,216,180,.12)'; ctx.lineWidth = 1;
-  for (let i = -2; i <= 2; i++) {
-    ctx.beginPath(); ctx.ellipse(cx, cy + i * 24, r * .98, r * .14, -.2, 0, TAU); ctx.stroke();
-  }
-  for (let i = -1; i <= 1; i++) {
-    ctx.beginPath(); ctx.ellipse(cx + i * 32, cy, r * .13, r * .95, .15, 0, TAU); ctx.stroke();
-  }
-  ctx.strokeStyle = 'rgba(201,169,106,.22)';
-  ctx.beginPath(); ctx.arc(cx - 16, cy + 12, 18, 0, TAU); ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx + 26, cy - 24, 11, 0, TAU); ctx.stroke();
-  ctx.restore();
+  /* primary spiral galaxy */
+  const cx = 704, cy = 238, r = 78;
+  skGalaxy(1, cx, cy, r, g.clock, .98);
   ctx.save();
   ctx.strokeStyle = SK.goldDim; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, r + 3, 0, TAU); ctx.stroke();
   ctx.strokeStyle = SK.goldFaint;
   ctx.beginPath(); ctx.ellipse(cx, cy, r * 1.55, r * .3, -.35, 0, TAU); ctx.stroke();
+  ctx.setLineDash([2, 7]);
+  ctx.strokeStyle = 'rgba(87,230,255,.42)';
+  ctx.beginPath(); ctx.arc(cx, cy, r + 12, -.4, 1.8); ctx.stroke();
   ctx.restore();
   skStar(cx + r * 1.25, cy - 42, 5, SK.goldDim, .2);
+  for (let i = 0; i < 6; i++) {
+    const a = -.35 + i * .16;
+    skDiamond(cx + Math.cos(a) * (r + 12), cy + Math.sin(a) * (r + 12), 2, SK.goldDim, null);
+  }
   skCompass(852, 470, 24);
 
   /* marginalia */
@@ -5759,7 +5849,7 @@ function skMenu(){
     skText(rows[i][0], 114, y, 8, SK.gold, 'left', 400, true, 1.4);
     skText(rows[i][1], 168, y, 8.5, SK.paperDim, 'left', 400);
   }
-  skText('星图手稿 · 第一卷', 480, 576, 6.5, SK.paperDim, 'center', 400, true, 2);
+  skText('星图导航 · 第一卷', 480, 576, 6.5, SK.paperDim, 'center', 400, true, 2);
 }
 
 /* ---------- star map ---------- */
@@ -5785,24 +5875,32 @@ function skChapters(){
     const d = dimOf(i + 1), n = nodes[i];
     const done = [1, 2, 3].filter(s => (PROGRESS.cleared[stageKeyOf(i + 1, s, false)] || 0) > 0).length;
     const hot = g.hoverHot && g.hoverHot.id === 'skin_chap_' + i;
+    const rr = hot ? 38 : 35;
+    skGalaxy(i + 1, n.x, n.y, rr, g.clock + i * .6, .96);
     ctx.save();
     ctx.strokeStyle = hot ? SK.paper : SK.goldDim;
     ctx.lineWidth = hot ? 1.5 : 1;
-    ctx.beginPath(); ctx.arc(n.x, n.y, hot ? 31 : 28, 0, TAU); ctx.stroke();
-    ctx.strokeStyle = rgba(d.color, .7);
-    ctx.beginPath(); ctx.arc(n.x, n.y, 22, -.6, 2.0); ctx.stroke();
-    ctx.fillStyle = 'rgba(7,9,14,.92)';
-    ctx.beginPath(); ctx.arc(n.x, n.y, 19, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(n.x, n.y, rr + 5, 0, TAU); ctx.stroke();
+    ctx.setLineDash([2, 9]);
+    ctx.strokeStyle = rgba(d.color, .55);
+    ctx.beginPath(); ctx.arc(n.x, n.y, rr + 11, .4, 2.9); ctx.stroke();
     ctx.restore();
-    skText(d.roman, n.x, n.y + 1, 16, d.color, 'center', 400, true);
-    skText(d.name, n.x, n.y + 47, 14.5, '#f8f0dc', 'center', 600, false, 1.2);
-    skText('首领 · ' + (ENEMY_TYPES[d.boss] ? ENEMY_TYPES[d.boss].name : '未知'), n.x, n.y + 64, 8.6, '#e0a394', 'center', 400);
+    /* chapter numeral badge */
+    ctx.save();
+    ctx.fillStyle = 'rgba(3,6,13,.88)';
+    ctx.beginPath(); ctx.arc(n.x - rr + 2, n.y - rr + 2, 9, 0, TAU); ctx.fill();
+    ctx.strokeStyle = rgba(d.color, .8); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(n.x - rr + 2, n.y - rr + 2, 9, 0, TAU); ctx.stroke();
+    ctx.restore();
+    skText(d.roman, n.x - rr + 2, n.y - rr + 2, 7.5, d.color, 'center', 600, true);
+    skText(d.name, n.x, n.y + 54, 15, '#e8fbff', 'center', 600, false, 1.4);
+    skText('首领 · ' + (ENEMY_TYPES[d.boss] ? ENEMY_TYPES[d.boss].name : '未知'), n.x, n.y + 71, 8.8, '#ff9aaa', 'center', 400);
     for (let s = 0; s < 3; s++) {
       const cleared = (PROGRESS.cleared[stageKeyOf(i + 1, s + 1, false)] || 0) > 0;
-      skStar(n.x - 21 + s * 21, n.y + 78, 4, cleared ? SK.gold : SK.goldFaint, 0);
+      skStar(n.x - 21 + s * 21, n.y + 86, 4, cleared ? SK.gold : SK.goldFaint, 0);
     }
-    skText(done + ' / 3', n.x + 40, n.y - 2, 8.5, done ? '#b6d19e' : SK.paperDim, 'left', 400, true, .6);
-    addHot('skin_chap_' + i, n.x - 76, n.y - 40, 152, 124, () => openStages(i + 1),
+    skText(done + ' / 3', n.x + 47, n.y - 9, 8.5, done ? SK.green : SK.paperDim, 'left', 400, true, .6);
+    addHot('skin_chap_' + i, n.x - 82, n.y - 52, 164, 156, () => openStages(i + 1),
       '章节 ' + d.roman + ' · ' + d.name + '\n' + done + ' / 3 已通关\n点击查看小关');
   }
 
@@ -5835,6 +5933,16 @@ function skStages(){
   skText(challenge ? '三档试炼 · 每档六波 · 大幅强化的敌群与终维首领' : '选择一个小关进入 · 每关六波 · 进入后重新选择四座炮塔', 76, 68, 8.5, SK.paperDim, 'left', 400, true, .7);
   skLine(74, 84, 886, 84, SK.goldDim, 1);
 
+  /* chapter emblem: a small galaxy portrait in the header */
+  skGalaxy(d.id, 878, 47, 22, g.clock, .95);
+  ctx.save();
+  ctx.strokeStyle = rgba(d.color, .65); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(878, 47, 27, 0, TAU); ctx.stroke();
+  ctx.setLineDash([2, 6]);
+  ctx.strokeStyle = SK.goldFaint;
+  ctx.beginPath(); ctx.arc(878, 47, 32, .4, 2.8); ctx.stroke();
+  ctx.restore();
+
   const xs = [230, 480, 730];
   for (let s = 0; s < 3; s++) {
     const info = stageInfoOf(challenge ? 6 : g.chapter, s + 1, challenge);
@@ -5846,7 +5954,7 @@ function skStages(){
     ctx.beginPath(); ctx.arc(x, y, 66, 0, TAU); ctx.stroke();
     ctx.strokeStyle = rgba(d.color, .55);
     ctx.beginPath(); ctx.arc(x, y, 53, 0, TAU); ctx.stroke();
-    ctx.fillStyle = 'rgba(6,9,15,.92)';
+    ctx.fillStyle = 'rgba(6,9,15,.74)';
     ctx.beginPath(); ctx.arc(x, y, 51, 0, TAU); ctx.fill();
     ctx.restore();
     skText('0' + (s + 1), x, y - 18, 28, rgba(d.color, .95), 'center', 400, true);
@@ -6014,7 +6122,7 @@ function skPause(){
   fullBlock(0);
   skFrame(330, 120, 300, 300, 12, SK.goldDim, 'rgba(6,8,13,.95)');
   skText('已 暂 停', 480, 164, 22, SK.paper, 'center', 400, false, 5);
-  skText('ASTRAL CODEX · INTERMISSION', 480, 184, 6.5, SK.paperFaint, 'center', 400, true, 1.4);
+  skText('ASTRAL NAVIGATOR · INTERMISSION', 480, 184, 6.5, SK.paperFaint, 'center', 400, true, 1.4);
   const g = game;
   skLink('skin_resume', '继续战斗', 480, 232, 12, SK.paper, () => togglePause(), '继续 · 空格', 'center');
   skLink('skin_retry_pause', '重打本关', 480, 274, 10, SK.paperDim, () => { g.paused = false; startStage(g.stageInfo.dim, g.stageInfo.stage, g.stageInfo.challenge, g.stageInfo.trial); }, '重新开始', 'center');
