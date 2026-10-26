@@ -5282,6 +5282,7 @@ const SK = {
   violet: '#a88cff',
   green: '#6cf0c2'
 };
+let skHotLock = false;
 const SK_SERIF = '"Bahnschrift", "DIN Alternate", "Segoe UI", "Microsoft YaHei", sans-serif';
 const SK_SANS = '"Bahnschrift", "Segoe UI", "Microsoft YaHei", sans-serif';
 const SK_MONO = 'Consolas, "Courier New", monospace';
@@ -5542,7 +5543,7 @@ function skLink(id, label, x, y, size, color, action, tip, align, dis){
   }
   ctx.restore();
   skText(label, ax + w / 2, y + size * .34, size, dis ? SK.paperFaint : (hot ? '#ffffff' : col), 'center', 600, false, .8);
-  addHot(id, ax, by - 4, w, h + 8, action, tip, !!dis);
+  if (!skHotLock) addHot(id, ax, by - 4, w, h + 8, action, tip, !!dis);
   return w;
 }
 function skWrap(s, maxW, size, mono){
@@ -6895,6 +6896,233 @@ window.addEventListener('keydown', e => {
 
 /* boot: only the first load gets the cinematic */
 if (game) { game.introT = 3.3; game.introDur = 3.3; }
+
+/* ============================================================
+   HOLOGRAPHIC MENU PROJECTION
+   The start screen after the intro assembles one element at a time,
+   like a film-set hologram booting up.
+   ============================================================ */
+function holEase(x){ x = clamp(x, 0, 1); return 1 - Math.pow(1 - x, 3); }
+function holA(boot, t0, dur){ return holEase((boot - t0) / (dur || .28)); }
+function holFlick(t, amp){
+  const h = introHash(Math.floor(t * 34));
+  return 1 - (h > .88 ? (amp || .18) : 0);
+}
+function holTextAt(boot, t0, text, x, y, size, color, align, weight, mono, tracking, amp){
+  const a = holA(boot, t0, .30);
+  if (a <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = a * holFlick(game.clock, amp || .18);
+  ctx.translate(0, (1 - a) * 8);
+  skText(text, x, y, size, color, align, weight, mono, tracking);
+  ctx.restore();
+}
+
+function skMenuHolo(){
+  const g = game, t = g.clock;
+  if (!g.menuBootSeen) { g.menuBootSeen = true; g.menuBootAt = t + .02; }
+  const boot = clamp((t - g.menuBootAt) / 1.55, 0, 1);
+  const bE = holEase(boot);
+
+  skBackdrop(t);
+  fullBlock(0);
+
+  /* projected light cone */
+  const cone = holA(boot, .01, .5);
+  if (cone > 0) {
+    ctx.save();
+    const cg = ctx.createLinearGradient(0, 86, 0, 572);
+    cg.addColorStop(0, 'rgba(87,230,255,' + (.055 * cone).toFixed(3) + ')');
+    cg.addColorStop(.7, 'rgba(87,230,255,.012)');
+    cg.addColorStop(1, 'rgba(87,230,255,0)');
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.moveTo(112, 86); ctx.lineTo(608, 86);
+    ctx.lineTo(420, 572); ctx.lineTo(300, 572);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(87,230,255,' + (.10 * cone).toFixed(3) + ')';
+    ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+  }
+
+  /* dark hall, then the projection powers up */
+  if (boot < 1) {
+    ctx.fillStyle = 'rgba(2,7,14,' + (.60 * (1 - bE)).toFixed(3) + ')';
+    ctx.fillRect(0, 0, W, H);
+  }
+  skBorder();
+
+  /* left projection panel */
+  const pa = holA(boot, 0, .35);
+  if (pa > 0) {
+    ctx.save(); ctx.globalAlpha = pa;
+    const lg = ctx.createLinearGradient(50, 0, 620, 0);
+    lg.addColorStop(0, 'rgba(3,8,15,.95)');
+    lg.addColorStop(.62, 'rgba(3,8,15,.84)');
+    lg.addColorStop(1, 'rgba(3,8,15,0)');
+    ctx.fillStyle = lg; ctx.fillRect(10, 8, 620, H);
+    ctx.restore();
+  }
+
+  /* axis rail */
+  const aa = holA(boot, .03, .32);
+  if (aa > 0) {
+    ctx.save(); ctx.globalAlpha = aa; ctx.translate(-12 * (1 - aa), 0);
+    skLine(88, 100, 88, 470, SK.goldDim, 1);
+    for (let y = 110; y < 470; y += 24) skLine(84, y, 92, y, SK.goldFaint, 1);
+    ctx.restore();
+  }
+
+  /* galaxy hologram */
+  const ga = holA(boot, .30, .55);
+  if (ga > 0) {
+    ctx.save();
+    ctx.globalAlpha = ga;
+    const s = .78 + .22 * ga;
+    ctx.translate(704, 238); ctx.scale(s, s); ctx.translate(-704, -238);
+    skGalaxy(1, 704, 238, 78, t, .98);
+    ctx.strokeStyle = SK.goldDim; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(704, 238, 81, 0, TAU); ctx.stroke();
+    ctx.strokeStyle = SK.goldFaint;
+    ctx.beginPath(); ctx.ellipse(704, 238, 121, 23.4, -.35, 0, TAU); ctx.stroke();
+    ctx.setLineDash([2, 7]);
+    ctx.strokeStyle = 'rgba(87,230,255,.42)';
+    ctx.beginPath(); ctx.arc(704, 238, 90, -.4, 1.8); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+    const dA = holA(boot, .42, .3);
+    if (dA > 0) {
+      ctx.save(); ctx.globalAlpha = dA;
+      skStar(801, 196, 5, SK.goldDim, .2);
+      for (let i = 0; i < 6; i++) {
+        const a = -.35 + i * .16;
+        skDiamond(704 + Math.cos(a) * 90, 238 + Math.sin(a) * 90, 2, SK.goldDim, null);
+      }
+      ctx.restore();
+    }
+  }
+
+  /* title, with chromatic split + scan wipe */
+  const ta = holA(boot, .10, .34);
+  if (ta > 0) {
+    const fl = holFlick(t, .32);
+    ctx.save();
+    ctx.globalAlpha = ta * fl;
+    ctx.translate(0, (1 - ta) * 9);
+    ctx.beginPath();
+    ctx.rect(100, 102, 540, 86 * Math.max(.18, ta));
+    ctx.clip();
+    if (ta < .92) {
+      ctx.save();
+      ctx.globalAlpha = .20 * ta;
+      skText('维 度 征 服', 111.5, 145, 46, '#ff5d7e', 'left', 400, false, 8);
+      skText('维 度 征 服', 108.5, 145, 46, '#57e6ff', 'left', 400, false, 8);
+      ctx.restore();
+    }
+    skText('维 度 征 服', 110, 145, 46, SK.paper, 'left', 400, false, 8);
+    ctx.restore();
+    if (ta < .995) {
+      const sy = 102 + 86 * Math.max(.18, ta);
+      ctx.save(); ctx.globalAlpha = .55 * ta;
+      skLine(106, sy, 610, sy, 'rgba(87,230,255,.8)', 1);
+      ctx.restore();
+    }
+  }
+
+  holTextAt(boot, .25, 'ASTRAL NAVIGATOR · SIX REALMS', 112, 188, 7, SK.gold, 'left', 400, true, 2.4, .15);
+  holTextAt(boot, .34, '六个章节 · 十八个小关 · 每小关六波', 112, 232, 11, SK.paperDim, 'left', 400, false, .8, .15);
+
+  const cc = campaignClearCount(), total = CAMPAIGN.chapters * CAMPAIGN.stagesPerChapter;
+  const all = '已征服 ' + cc + ' / ' + total + '   ·   已解锁炮塔 ' + PROGRESS.unlocked.length + ' / 24   ·   历史最佳 ' + fmt(PROGRESS.best);
+  holTextAt(boot, .42, all, 112, 254, 8, SK.paperFaint, 'left', 400, true, .5, .1);
+
+  /* start action */
+  const aS = holA(boot, .54, .28);
+  if (aS > 0) {
+    const sw = Math.max(82, skMeasure('进入星图', 21, 500) + 66);
+    ctx.save();
+    ctx.globalAlpha = aS * holFlick(t, .15);
+    skHotLock = aS < .78;
+    skLink('skin_menu_start', '进入星图', 108, 320, 21, SK.paper, () => openChapters(), '选择章节与小关 · 每关重新配装');
+    skHotLock = false;
+    skText('ENTER THE ATLAS', 108 + sw / 2, 350, 6.5, SK.goldDim, 'center', 400, true, 2);
+    skLine(106, 362, 106 + sw, 362, SK.goldFaint, 1);
+    ctx.restore();
+  }
+
+  /* challenge action */
+  const aC = holA(boot, .66, .3);
+  if (aC > 0) {
+    const ch = isChallengeUnlocked();
+    ctx.save();
+    ctx.globalAlpha = aC * holFlick(t, .12);
+    skHotLock = aC < .78;
+    skLink('skin_menu_challenge', ch ? '深渊试炼' : '深渊试炼 · 未解锁', 108, 380, 11, ch ? SK.red : SK.paperDim, () => {
+      if (ch) openChallenges();
+      else { setBanner('试炼未解锁', '通关 3 个战役小关后开启', '#b55a4d', 2); sfx('error'); }
+    }, ch ? '高强度敌群与终维首领' : '通关 3 个战役小关后开启', 'left', !ch);
+    skHotLock = false;
+    ctx.restore();
+  }
+
+  /* instructions, one line at a time */
+  const rows = [
+    ['战斗', '1–4 选塔 · 左键放置 · 右键/Esc 取消'],
+    ['节奏', '空格暂停 · S 倍速 · 每小关 6 波'],
+    ['成长', 'Lv.3 专精二选一 · 首通解锁新炮塔'],
+    ['敌情', '护甲 / 抗性 / 护盾 / 相位 / 干扰']
+  ];
+  for (let i = 0; i < rows.length; i++) {
+    const a = holA(boot, .74 + i * .055, .26);
+    if (a <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = a * holFlick(t, .1);
+    ctx.translate(-10 * (1 - a), 0);
+    skText(rows[i][0], 112, 434 + i * 22, 8, SK.gold, 'left', 400, true, 1.4);
+    skText(rows[i][1], 168, 434 + i * 22, 8.5, SK.paperDim, 'left', 400);
+    ctx.restore();
+  }
+
+  holTextAt(boot, 1.02, '星图导航 · 第一卷', 480, 576, 6.5, SK.paperDim, 'center', 400, true, 2, .1);
+
+  /* holo raster */
+  ctx.save();
+  ctx.globalAlpha = .045 * (.35 + .65 * bE);
+  ctx.fillStyle = '#57e6ff';
+  for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
+  ctx.restore();
+  const ry = (t * 110) % H;
+  ctx.fillStyle = 'rgba(87,230,255,.06)';
+  ctx.fillRect(0, ry, W, 2);
+
+  /* projector brackets */
+  const ca = holA(boot, .04, .4);
+  if (ca > 0) {
+    ctx.save();
+    ctx.globalAlpha = .55 * ca;
+    ctx.strokeStyle = SK.goldDim;
+    ctx.lineWidth = 1;
+    const L = 16;
+    const pts = [[76, 76, 1, 1], [618, 76, -1, 1], [76, 520, 1, -1], [618, 520, -1, -1]];
+    for (const [x, y, sx, sy] of pts) {
+      ctx.beginPath(); ctx.moveTo(x + sx * L, y); ctx.lineTo(x, y); ctx.lineTo(x, y + sy * L); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /* analogue noise while booting */
+  if (boot < .98 && introHash(Math.floor(t * 30)) > .86) {
+    ctx.fillStyle = 'rgba(87,230,255,.018)';
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  /* click anywhere before the buttons stabilize to finish the projection */
+  if (boot < .47) {
+    addHot('menu_boot_skip', 0, 0, 620, H, () => { g.menuBootAt = g.clock - 2; sfx('click'); }, '跳过全息展开');
+  }
+}
+
+skMenu = skMenuHolo;
 </script>
 </body>
 </html>
