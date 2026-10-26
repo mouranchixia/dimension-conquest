@@ -53,7 +53,7 @@
    ============================================================ */
 const W = 960, H = 600, TAU = Math.PI * 2;
 const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
+let ctx = canvas.getContext('2d');
 let DPR = 1;
 function fitCanvas(){
   DPR = Math.min(2, window.devicePixelRatio || 1);
@@ -7123,6 +7123,192 @@ function skMenuHolo(){
 }
 
 skMenu = skMenuHolo;
+/* ============================================================
+   10_holo.js — holographic entrance for out-of-battle screens
+   Applies to: chapters / stages / loadout / stageclear / victory
+   The screen is projected top-to-bottom, element rows appear in order,
+   with a scan edge, grid, glitch band and skip hotspot.
+   ============================================================ */
+const _holoBaseRender = render;
+let _holoKey = '';
+let _holoAt = -10;
+
+const HOLO_SCREENS = {
+  chapters: 1,
+  stages: 1,
+  loadout: 1,
+  stageclear: 1,
+  victory: 1
+};
+
+function holoEase(x){
+  x = Math.max(0, Math.min(1, x));
+  return 1 - Math.pow(1 - x, 3);
+}
+
+function holoSweepFX(p, edge){
+  const a = 1 - p;
+  const g = game;
+  const t = g ? g.clock : 0;
+  ctx.save();
+
+  /* projection grid */
+  ctx.strokeStyle = 'rgba(87,230,255,' + (0.045 * a) + ')';
+  ctx.lineWidth = 1;
+  for(let x = 0; x <= W; x += 48){
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for(let y = 0; y <= H; y += 48){
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  /* horizontal scan lines */
+  ctx.fillStyle = 'rgba(120,238,255,' + (0.035 * a) + ')';
+  const off = (t * 40) % 4;
+  for(let y = -4 + off; y < H; y += 4) ctx.fillRect(0, y, W, 1);
+
+  /* soft projector cone */
+  const cone = ctx.createLinearGradient(480, 0, 480, H);
+  cone.addColorStop(0, 'rgba(87,230,255,' + (0.055 * a) + ')');
+  cone.addColorStop(1, 'rgba(87,230,255,0)');
+  ctx.fillStyle = cone;
+  ctx.beginPath();
+  ctx.moveTo(480, -20);
+  ctx.lineTo(120, H);
+  ctx.lineTo(840, H);
+  ctx.closePath();
+  ctx.fill();
+
+  /* scan edge band */
+  const y0 = Math.max(0, edge);
+  const band = ctx.createLinearGradient(0, y0 - 28, 0, y0 + 10);
+  band.addColorStop(0, 'rgba(87,230,255,0)');
+  band.addColorStop(0.55, 'rgba(87,230,255,' + (0.16 * a) + ')');
+  band.addColorStop(0.82, 'rgba(190,250,255,' + (0.75 * a) + ')');
+  band.addColorStop(1, 'rgba(87,230,255,0)');
+  ctx.fillStyle = band;
+  ctx.fillRect(0, y0 - 28, W, 38);
+
+  ctx.fillStyle = 'rgba(210,250,255,' + (0.9 * a) + ')';
+  ctx.fillRect(0, y0 - 1, W, 2);
+
+  /* glitch bands near the edge */
+  const gl = Math.sin(t * 19) * 0.5 + 0.5;
+  ctx.fillStyle = 'rgba(255,93,126,' + (0.20 * a * gl) + ')';
+  ctx.fillRect(0, y0 - 9, W, 2);
+  ctx.fillStyle = 'rgba(87,230,255,' + (0.18 * a * (1 - gl)) + ')';
+  ctx.fillRect(0, y0 + 5, W, 1);
+
+  /* corner brackets */
+  ctx.strokeStyle = 'rgba(87,230,255,' + (0.55 * a) + ')';
+  ctx.lineWidth = 1;
+  const b = 22;
+  ctx.beginPath();
+  ctx.moveTo(14, 14 + b); ctx.lineTo(14, 14); ctx.lineTo(14 + b, 14);
+  ctx.moveTo(W - 14 - b, 14); ctx.lineTo(W - 14, 14); ctx.lineTo(W - 14, 14 + b);
+  ctx.moveTo(14, H - 14 - b); ctx.lineTo(14, H - 14); ctx.lineTo(14 + b, H - 14);
+  ctx.moveTo(W - 14 - b, H - 14); ctx.lineTo(W - 14, H - 14); ctx.lineTo(W - 14, H - 14 - b);
+  ctx.stroke();
+
+  /* small labels */
+  ctx.font = '600 6px "Microsoft YaHei","Noto Sans SC",sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(87,230,255,' + (0.65 * a) + ')';
+  ctx.fillText('HOLO-PROJECTION // ' + String(game && game.state || '').toUpperCase(), 24, H - 12);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(160,235,255,' + (0.45 * a) + ')';
+  ctx.fillText('SCAN ' + Math.round(p * 100) + '%', W - 24, H - 12);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(87,230,255,' + (0.62 * a) + ')';
+  ctx.fillText('CLICK // SKIP PROJECTION', W / 2, H - 12);
+
+  /* flicker wash */
+  ctx.fillStyle = 'rgba(87,230,255,' + (0.025 * a) + ')';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.restore();
+}
+
+let _holoBuf = null;
+let _holoBufCtx = null;
+function holoBuffer(){
+  if(_holoBuf) return _holoBuf;
+  try {
+    _holoBuf = document.createElement('canvas');
+    _holoBuf.width = W;
+    _holoBuf.height = H;
+    _holoBufCtx = _holoBuf.getContext('2d');
+  } catch(e) {
+    _holoBuf = null;
+  }
+  return _holoBuf;
+}
+
+render = function(){
+  const g = game;
+  if(!g) return;
+
+  if(g.introT > 0 || g.state === 'menu' || !HOLO_SCREENS[g.state]){
+    _holoKey = g.state;
+    _holoBaseRender();
+    return;
+  }
+
+  if(_holoKey !== g.state){
+    _holoKey = g.state;
+    _holoAt = g.clock;
+  }
+
+  const p = Math.max(0, Math.min(1, (g.clock - _holoAt) / 0.72));
+  if(p >= 1){
+    _holoAt = -10;
+    _holoBaseRender();
+    return;
+  }
+
+  const buf = holoBuffer();
+  if(!buf){
+    _holoBaseRender();
+    holoSweepFX(p, H * holoEase(p));
+    addHot('holo_skip', 0, 0, W, H, () => { _holoAt = g.clock - 2; }, '跳过全息投影');
+    return;
+  }
+
+  /* Render the real screen into a hidden buffer, then reassemble it
+     in horizontal hologram bands. Elements at different Y project in
+     sequence, with an offset/flicker while their band is still late. */
+  const mainCtx = ctx;
+  ctx.save();
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#030611';
+  ctx.fillRect(0, 0, W, H);
+  try {
+    ctx = _holoBufCtx;
+    _holoBufCtx.clearRect(0, 0, W, H);
+    _holoBaseRender();
+  } finally {
+    ctx = mainCtx;
+  }
+  ctx.restore();
+
+  const band = 72;
+  for(let y = 0; y < H; y += band){
+    const q = Math.max(0, Math.min(1, (p - (y / H) * 0.55) / 0.45));
+    if(q <= 0.01) continue;
+    ctx.globalAlpha = q;
+    ctx.drawImage(buf, 0, y, W, Math.min(band, H - y), 0, y, W, Math.min(band, H - y));
+  }
+  ctx.globalAlpha = 1;
+
+  holoSweepFX(p, H * holoEase(p));
+
+  addHot('holo_skip', 0, 0, W, H, () => {
+    _holoAt = g.clock - 2;
+  }, '跳过全息投影');
+};
+
+window.__AG_HOLO = () => ({ state: game && game.state, key: _holoKey, at: _holoAt, progress: game ? (game.clock - _holoAt) / 0.62 : 0 });
 </script>
 </body>
 </html>
