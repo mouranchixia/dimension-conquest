@@ -10877,6 +10877,181 @@ if (typeof window !== 'undefined' && window.__AG) {
   };
   window.__AG_TOWER_ID = { sig: SIG, fx: FX };
 })();
+/* 19_bgm.js — procedural lobby / galaxy / endless background music */
+(function(){
+  if (typeof window === 'undefined') return;
+  const TRACKS = {
+    lobby:   { name:'星图余响', bpm:62,  root:146.83, scale:[0,3,5,7,10,12], chords:[0,-4,-7,-2], padWave:'sine', bassWave:'triangle', arpWave:'sine', arp:2, lead:8, drums:0, level:.19, filter:1500 },
+    dim1:    { name:'近地轨道', bpm:92,  root:174.61, scale:[0,2,4,7,9,12], chords:[0,-3,-7,-5], padWave:'triangle', bassWave:'triangle', arpWave:'square', arp:2, lead:8, drums:1, level:.20, filter:2600 },
+    dim2:    { name:'熔火星域', bpm:112, root:164.81, scale:[0,1,3,5,7,8,10], chords:[0,-4,-7,-1], padWave:'sawtooth', bassWave:'sawtooth', arpWave:'sawtooth', arp:2, lead:6, drums:2, level:.19, filter:1800 },
+    dim3:    { name:'霜寂星云', bpm:72,  root:196.00, scale:[0,3,5,7,10,12], chords:[0,-5,-7,-3], padWave:'sine', bassWave:'triangle', arpWave:'sine', arp:4, lead:10, drums:0, level:.18, filter:3600 },
+    dim4:    { name:'生体星群', bpm:100, root:130.81, scale:[0,3,5,7,10,12], chords:[0,-2,-5,-7], padWave:'triangle', bassWave:'triangle', arpWave:'triangle', arp:3, lead:7, drums:1, level:.19, filter:2100 },
+    dim5:    { name:'赛博星环', bpm:124, root:146.83, scale:[0,2,3,7,8,12], chords:[0,-4,-7,-2], padWave:'square', bassWave:'square', arpWave:'square', arp:1, lead:4, drums:2, level:.18, filter:2800 },
+    dim6:    { name:'统御之庭', bpm:54,  root:110.00, scale:[0,2,3,5,7,8,11], chords:[0,-4,-7,-5], padWave:'sawtooth', bassWave:'sine', arpWave:'sine', arp:4, lead:12, drums:0, level:.19, filter:1200 },
+    endless: { name:'无尽回廊', bpm:104, root:123.47, scale:[0,1,5,7,8,10], chords:[0,-1,-5,-3], padWave:'sawtooth', bassWave:'square', arpWave:'triangle', arp:2, lead:6, drums:2, level:.20, filter:2200 }
+  };
+  const SCALE = TRACKS.lobby.scale;
+  let bus = null, cur = null, nextT = 0, step = 0, noiseBuf = null, lastGame = null;
+
+  function makeBus(level){
+    if (!AC) return null;
+    const g = AC.createGain();
+    g.gain.value = 0.0001;
+    const f = AC.createBiquadFilter();
+    f.type = 'lowpass'; f.frequency.value = 3200; f.Q.value = .3;
+    g.connect(f); f.connect(AC.destination);
+    try { g.gain.linearRampToValueAtTime(level, AC.currentTime + 1.1); } catch(e){}
+    return { gain:g, filter:f, level:level };
+  }
+  function killBus(b){
+    if (!b) return;
+    try {
+      const now = AC.currentTime;
+      b.gain.gain.cancelScheduledValues(now);
+      b.gain.gain.setValueAtTime(Math.max(0.0001, b.gain.gain.value), now);
+      b.gain.gain.exponentialRampToValueAtTime(0.0001, now + .8);
+      b.filter.frequency.setTargetAtTime(500, now, .3);
+      setTimeout(() => { try { b.gain.disconnect(); b.filter.disconnect(); } catch(e){} }, 1100);
+    } catch(e){}
+  }
+  function desired(){
+    if (!game || !AC) return null;
+    if (game.introT > 0) return null;
+    const st = game.state;
+    const battle = st === 'build' || st === 'fight' || st === 'pause' || st === 'reward' || st === 'loadout';
+    if (game.endlessMode && battle) return 'endless';
+    if (battle && game.dimension >= 1 && game.dimension <= 6) return 'dim' + game.dimension;
+    return 'lobby';
+  }
+  function startTrack(key){
+    const t = TRACKS[key] || TRACKS.lobby;
+    killBus(bus);
+    bus = makeBus(t.level);
+    if (bus) bus.filter.frequency.value = t.filter || 2200;
+    cur = key; step = 0;
+    nextT = AC ? AC.currentTime + .12 : 0;
+  }
+  function noise(){
+    if (!AC) return null;
+    if (!noiseBuf){
+      const n = Math.floor(AC.sampleRate * 1.2);
+      noiseBuf = AC.createBuffer(1, n, AC.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i=0;i<n;i++) d[i] = Math.random()*2-1;
+    }
+    const s = AC.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+    return s;
+  }
+  function osc(freq, dur, type, vol, pan, at, cut, detune){
+    if (!AC || !bus) return;
+    try {
+      const t = at;
+      const o = AC.createOscillator(); o.type = type || 'sine';
+      o.frequency.setValueAtTime(Math.max(24, freq), t);
+      if (detune) o.detune.value = detune;
+      const g = AC.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(Math.max(.0002, vol || .01), t + .018);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      let node = o;
+      if (cut){
+        const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 1.1;
+        f.frequency.setValueAtTime(Math.max(80, cut), t);
+        node.connect(f); node = f;
+      }
+      if (pan != null && AC.createStereoPanner){
+        const p = AC.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, pan));
+        node.connect(p); node = p;
+      }
+      node.connect(g); g.connect(bus.gain);
+      o.start(t); o.stop(t + dur + .04);
+    } catch(e){}
+  }
+  function drum(kind, at){
+    if (!AC || !bus) return;
+    try {
+      if (kind === 'kick'){
+        const o = AC.createOscillator(), g = AC.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(105, at);
+        o.frequency.exponentialRampToValueAtTime(38, at + .2);
+        g.gain.setValueAtTime(.0001, at);
+        g.gain.exponentialRampToValueAtTime(.07, at + .008);
+        g.gain.exponentialRampToValueAtTime(.0001, at + .23);
+        o.connect(g); g.connect(bus.gain); o.start(at); o.stop(at + .25);
+      } else {
+        const s = noise(); if (!s) return;
+        const f = AC.createBiquadFilter(), g = AC.createGain();
+        f.type = kind === 'snare' ? 'bandpass' : 'highpass';
+        f.frequency.value = kind === 'snare' ? 1800 : 6200;
+        f.Q.value = kind === 'snare' ? .9 : .6;
+        g.gain.setValueAtTime(.0001, at);
+        g.gain.exponentialRampToValueAtTime(kind === 'snare' ? .028 : .012, at + .006);
+        g.gain.exponentialRampToValueAtTime(.0001, at + (kind === 'snare' ? .16 : .05));
+        s.connect(f); f.connect(g); g.connect(bus.gain);
+        s.start(at); s.stop(at + .2);
+      }
+    } catch(e){}
+  }
+  function schedule(){
+    if (!AC || !bus || !cur) return;
+    const t = TRACKS[cur];
+    const stepDur = 60 / t.bpm / 4;
+    const look = AC.currentTime + .28;
+    if (nextT < AC.currentTime - .15) nextT = AC.currentTime + .06;
+    let guard = 0;
+    while (nextT < look && guard++ < 8){
+      const at = nextT;
+      const bar = Math.floor(step / 16) % 4;
+      const chord = t.chords[bar] || 0;
+      const root = t.root * Math.pow(2, chord/12);
+      const sc = t.scale;
+      const deg = sc[step % sc.length];
+      const note = t.root * Math.pow(2, (chord + deg)/12);
+      const wave = t.bassWave;
+      if (step % 16 === 0){
+        /* pad chord */
+        [0,3,7].forEach((iv,i) => osc(root * Math.pow(2, iv/12), stepDur*14, t.padWave, .010, (i-1)*.24, at, t.filter*.55, 4));
+        if (t.drums) drum('kick', at);
+      }
+      if (step % 8 === 0) osc(note/2, stepDur*5.2, wave, .018, 0, at, t.filter*.5);
+      if (t.drums && step % 8 === 4) drum('snare', at);
+      if (t.drums === 2 && step % 2 === 0) drum('hat', at);
+      if (step % t.arp === 0){
+        const deg2 = sc[(step / t.arp + bar) % sc.length];
+        const n2 = t.root * Math.pow(2, (chord + deg2)/12) * 2;
+        osc(n2, stepDur*.9, t.arpWave, .012, (step % 4 < 2 ? -.16 : .16), at, t.filter, 0);
+      }
+      if (step % (t.lead * 2) === 0){
+        const n3 = t.root * Math.pow(2, (chord + sc[(step/2) % sc.length])/12) * 4;
+        osc(n3, stepDur*2.4, 'sine', .008, 0, at, t.filter*1.4);
+      }
+      if (cur === 'endless' && game && game.wave >= 10 && step % 4 === 2){
+        const n4 = t.root * Math.pow(2, (chord + sc[(step+2) % sc.length])/12) * 2;
+        osc(n4, stepDur*.7, 'square', .006, 0, at, t.filter*1.2);
+      }
+      step++;
+      nextT += stepDur;
+    }
+  }
+  function tick(){
+    try {
+      if (!AC || !game) return;
+      if (AC.state === 'suspended') return;
+      if (muted){ if (bus){ try{ bus.gain.gain.setTargetAtTime(.0001, AC.currentTime, .05); }catch(e){} } return; }
+      const want = desired();
+      if (!want){ if (bus) bus.gain.gain.setTargetAtTime(.0001, AC.currentTime, .08); return; }
+      if (want !== cur) startTrack(want);
+      if (!bus) return;
+      const duck = (game.paused ? .32 : 1) * (game.state === 'pause' ? .55 : 1);
+      bus.gain.gain.setTargetAtTime(bus.level * duck, AC.currentTime, .25);
+      schedule();
+    } catch(e){}
+  }
+  setInterval(tick, 90);
+  window.__AG_BGM = () => ({ track: cur, name: cur ? TRACKS[cur].name : null, ac: AC ? AC.state : null, muted: !!muted, bus: bus ? bus.gain.gain.value : 0 });
+  /* expose for tests / future mixer */
+  window.__AG_BGM_TRACKS = TRACKS;
+})();
 </script>
 </body>
 </html>
