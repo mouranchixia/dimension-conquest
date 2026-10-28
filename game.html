@@ -588,7 +588,7 @@ const ENEMY_TRAITS = {
 for (const [key, patch] of Object.entries(ENEMY_TRAITS)) {
   if (ENEMY_TYPES[key]) Object.assign(ENEMY_TYPES[key], patch);
 }
-const LOADOUT_SIZE = 4;
+const LOADOUT_SIZE = 6;
 
 const ELITE_MODS = [
   { id: 'swift',   name: '迅捷', color: '#5ce1ff', apply(e) { e.speed *= 1.55; } },
@@ -764,7 +764,7 @@ function startGame(){
   clearBattle();
   g.nextPlan = planWave(1, 1);
   g.nextPlan.wave = 1;
-  setBanner('战前配置', '选择 4 座防御塔，自由组合你的防线', '#8ab4ff', 3);
+  setBanner('战前配置', '选择 6 座防御塔，自由组合你的防线', '#8ab4ff', 3);
   sfx('start');
 }
 
@@ -789,7 +789,7 @@ function beginDimension(dim){
   g.paused = false;
   g.speed = 1;
   g.tutorialT = 0;
-  setBanner('战前配置 · 维度 ' + d.roman, '从 24 座炮塔中任选 4 座，组合破局', d.color, 3.2);
+  setBanner('战前配置 · 维度 ' + d.roman, '从已解锁炮塔中任选 6 座，组合破局', d.color, 3.2);
   sfx('dimension');
 }
 
@@ -2075,7 +2075,7 @@ function toggleLoadout(ti){
   if (!TOWERS[ti]) return false;
   const at = g.loadout.indexOf(ti);
   if (at >= 0) { g.loadout.splice(at, 1); sfx('click'); return true; }
-  if (g.loadout.length >= LOADOUT_SIZE) { sfx('error'); addFloater(480, 300, '最多 4 座', '#ff8a6a', 14); return false; }
+  if (g.loadout.length >= LOADOUT_SIZE) { sfx('error'); addFloater(480, 300, '最多 ' + LOADOUT_SIZE + ' 座', '#ff8a6a', 14); return false; }
   g.loadout.push(ti);
   sfx('select');
   return true;
@@ -3633,12 +3633,11 @@ function onKeyDown(e){
   if (!game) return;
   const k = e.key;
   const g = game;
-  if (k >= '1' && k <= '4') {
+  if (k >= '1' && k <= '6') {
     if (g.state !== 'build') return;
-    const list = dimTowers(g.dimension);
     const idx = Number(k) - 1;
-    if (idx < list.length) {
-      const ti = towerIndex(list[idx].key);
+    const ti = g.loadout[idx];
+    if (ti != null) {
       g.buildType = g.buildType === ti ? -1 : ti;
       g.targeting = null;
       g.selectedTower = null;
@@ -4707,7 +4706,7 @@ const TOWER_INDEX = {};
 TOWERS.forEach((t, i) => { TOWER_INDEX[t.key] = i; });
 const TOWER_ORDER = [];
 DIMENSIONS.forEach(d => d.towers.forEach(k => TOWER_ORDER.push(k)));
-const DEFAULT_UNLOCK = dimOf(1).towers.slice(0, 4);
+const DEFAULT_UNLOCK = dimOf(1).towers.slice(0, 6);
 
 function defaultProgress(){
   return { unlocked: DEFAULT_UNLOCK.slice(), cleared: {}, best: bestScore || 0, challengeUnlocked: false, seen: [] };
@@ -4719,6 +4718,7 @@ function loadProgress(){
   if (raw && typeof raw === 'object') {
     if (Array.isArray(raw.unlocked)) {
       p.unlocked = raw.unlocked.filter(k => TOWER_INDEX[k] != null);
+      for (const k of DEFAULT_UNLOCK) if (p.unlocked.indexOf(k) < 0) p.unlocked.push(k);
     }
     if (raw.cleared && typeof raw.cleared === 'object') {
       for (const k of Object.keys(raw.cleared)) {
@@ -4973,12 +4973,12 @@ function startStage(dim, stage, challenge, trial){
 function confirmLoadout(){
   const g = game;
   if (!g || g.state !== 'loadout') return false;
-  if (g.loadout.length !== 4) {
-    setBanner('配置未完成', '需要选择 4 座炮塔', '#ffb45c', 2);
+  if (g.loadout.length !== LOADOUT_SIZE) {
+    setBanner('配置未完成', '需要选择 ' + LOADOUT_SIZE + ' 座炮塔', '#ffb45c', 2);
     sfx('error');
     return false;
   }
-  g.loadout = g.loadout.slice(0, 4);
+  g.loadout = g.loadout.slice(0, LOADOUT_SIZE);
   g.state = 'build';
   g.wave = 0;
   g.waveMax = CAMPAIGN.wavesPerStage;
@@ -5003,7 +5003,7 @@ function toggleLoadout(ti){
   const at = g.loadout.indexOf(ti);
   if (at >= 0) g.loadout.splice(at, 1);
   else {
-    if (g.loadout.length >= 4) {
+    if (g.loadout.length >= LOADOUT_SIZE) {
       setBanner('配置已满', '先移除一座炮塔', '#ffb45c', 1.8);
       sfx('error');
       return false;
@@ -5019,16 +5019,16 @@ function recommendedLoadout(dim){
   for (const k of d.towers) {
     const ti = TOWER_INDEX[k];
     if (ti != null && isTowerUnlocked(ti) && out.indexOf(ti) < 0) out.push(ti);
-    if (out.length >= 4) break;
+    if (out.length >= LOADOUT_SIZE) break;
   }
-  if (out.length < 4) {
+  if (out.length < LOADOUT_SIZE) {
     for (const k of TOWER_ORDER) {
       const ti = TOWER_INDEX[k];
       if (isTowerUnlocked(ti) && out.indexOf(ti) < 0) out.push(ti);
-      if (out.length >= 4) break;
+      if (out.length >= LOADOUT_SIZE) break;
     }
   }
-  return out.slice(0, 4);
+  return out.slice(0, LOADOUT_SIZE);
 }
 function recommendLoadout(){
   const g = game;
@@ -5126,7 +5126,7 @@ function drawMenu(){
   rr(ax - 250, 402, 500, 116, 10); ctx.fill();
   ctx.strokeStyle = 'rgba(110,160,220,.16)'; ctx.lineWidth = 1; rr(ax - 250, 402, 500, 116, 10); ctx.stroke();
   const rows = [
-    ['战斗', '1–4 选塔 · 左键放置 · 右键/Esc 取消'],
+    ['战斗', '1–6 选塔 · 左键放置 · 右键/Esc 取消'],
     ['节奏', '空格 暂停 · S 倍速 · 每小关 6 波'],
     ['成长', 'Lv.3 专精二选一 · 通关解锁新炮塔'],
     ['敌情', '护甲 / 抗性 / 护盾 / 相位 / 干扰，克制与配合是关键']
@@ -5206,7 +5206,7 @@ function drawStages(){
   const challenge = !!g.challenge;
   const d = dimOf(challenge ? 6 : g.chapter);
   txt(challenge ? '深 渊 试 炼' : '章节 ' + d.roman + ' · ' + d.name, W / 2, 42, 24, challenge ? '#ffb09a' : '#f2f8ff', 'center', 900);
-  txt(challenge ? '三档试炼 · 每档 6 波 · 大幅强化的敌群与终维首领' : '选择一个小关进入 · 每关 6 波 · 进入后重新选择 4 座炮塔', W / 2, 66, 10, 'rgba(190,212,238,.75)', 'center', 500);
+  txt(challenge ? '三档试炼 · 每档 6 波 · 大幅强化的敌群与终维首领' : '选择一个小关进入 · 每关 6 波 · 进入后重新选择 6 座炮塔', W / 2, 66, 10, 'rgba(190,212,238,.75)', 'center', 500);
 
   const cw = 250, ch = 258, gap = 35, x0 = 80, y0 = 122;
   for (let s = 0; s < 3; s++) {
@@ -5226,7 +5226,7 @@ function drawStages(){
     txt('6 波' + (info.bossKey ? ' · 首领镇守' : ' · 逐波推进'), x + cw / 2, y + 140, 9, info.bossKey ? 'rgba(255,150,160,.8)' : 'rgba(170,195,225,.6)', 'center', 600);
     txt(best ? '★★★'.slice(0, best) + '☆☆☆'.slice(0, 3 - best) : '未通关', x + cw / 2, y + 176, 14, best ? '#ffd166' : 'rgba(160,185,220,.4)', 'center', 700);
     txt(best ? '最佳 ' + best + ' 星' : '首次通关解锁炮塔', x + cw / 2, y + 198, 8, 'rgba(150,180,215,.55)', 'center', 500);
-    drawButton(x + 45, y + 214, cw - 90, 30, '进入小关', d.color, () => startStage(challenge ? 6 : g.chapter, s + 1, challenge, challenge ? s + 1 : 0), '开始后选择 4 座炮塔');
+    drawButton(x + 45, y + 214, cw - 90, 30, '进入小关', d.color, () => startStage(challenge ? 6 : g.chapter, s + 1, challenge, challenge ? s + 1 : 0), '开始后选择 6 座炮塔');
     addHot('stage_' + (s + 1), x, y, cw, ch, () => startStage(challenge ? 6 : g.chapter, s + 1, challenge, challenge ? s + 1 : 0), '进入小关');
   }
   drawButton(24, 540, 96, 30, '返回星图', '#8ab4ff', () => openChapters(), '返回章节选择');
@@ -5246,9 +5246,9 @@ function drawLoadout(){
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
   txt('战 前 配 置', W / 2, 40, 24, '#f2f8ff', 'center', 900);
-  txt('本关独立配装 · 从已解锁炮塔中选 4 座 · 下一关重新选择', W / 2, 63, 10, 'rgba(190,212,238,.75)', 'center', 500);
+  txt('本关独立配装 · 从已解锁炮塔中选 6 座 · 下一关重新选择', W / 2, 63, 10, 'rgba(190,212,238,.75)', 'center', 500);
   txt((g.challenge ? '深渊试炼 ' + ROMAN[g.stage - 1] : '章节 ' + dimOf(g.chapter).roman + ' · 小关 ' + g.stage) +
-    ' · 已选 ' + g.loadout.length + ' / 4 · 已解锁 ' + PROGRESS.unlocked.length + ' / 24', W / 2, 82, 9, rgba(d.color, .95), 'center', 700);
+    ' · 已选 ' + g.loadout.length + ' / 6 · 已解锁 ' + PROGRESS.unlocked.length + ' / 24', W / 2, 82, 9, rgba(d.color, .95), 'center', 700);
 
   const cw = 200, chh = 54, gapX = 10, gapY = 7, x0 = 78, y0 = 98;
   for (let row = 0; row < 6; row++) {
@@ -5308,10 +5308,10 @@ function drawLoadout(){
     }
   }
 
-  drawButton(372, 498, 220, 36, '锁定配置 · 进入战场', d.color, () => confirmLoadout(), '选择 4 座炮塔后开始', g.loadout.length !== 4, false, 12);
-  drawButton(604, 498, 152, 36, '本关推荐组合', '#ffd166', () => recommendLoadout(), '一键选择适合本章的 4 座炮塔', false, false, 10);
+  drawButton(372, 498, 220, 36, '锁定配置 · 进入战场', d.color, () => confirmLoadout(), '选择 6 座炮塔后开始', g.loadout.length !== 6, false, 12);
+  drawButton(604, 498, 152, 36, '本关推荐组合', '#ffd166', () => recommendLoadout(), '一键选择适合本章的 6 座炮塔', false, false, 10);
   txt('提示：敌方具有护甲、元素抗性、护盾、相位与干扰能力；单一伤害类型会被克制。', W / 2, 548, 8, 'rgba(160,190,225,.55)', 'center', 500);
-  txt('每关结束后下一关重新配装 · 初始只解锁 4 座炮塔 · 通关逐步解锁', W / 2, 564, 8, 'rgba(150,180,215,.4)', 'center', 500);
+  txt('每关结束后下一关重新配装 · 每关携带 6 座炮塔 · 通关逐步解锁', W / 2, 564, 8, 'rgba(150,180,215,.4)', 'center', 500);
 }
 
 /* ---------- 小关结算 ---------- */
@@ -5939,23 +5939,23 @@ function skBuildRail(g){
   }, (collapsed ? '展开炮台栏' : '收起炮台栏') + ' · B');
   if (collapsed) return;
 
-  const y = hy + hh + 6, h = 94, gap = 6;
+  const y = hy + hh + 6, h = 64, gap = 4;
   const active = g.buildType;
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 6; i++) {
     const ti = g.loadout[i];
     const yy = y + i * (h + gap);
     const def = ti != null ? TOWERS[ti] : null;
     const hot = g.hoverHot && g.hoverHot.id === 'skin_build_' + i;
     skFrame(x, yy, w, h, 6, active === ti ? SK.gold : hot ? SK.goldDim : SK.goldFaint, 'rgba(7,9,14,.94)');
     skText(String(i + 1), x + 7, yy + 11, 7, SK.paperDim, 'left', 400, true);
-    if (!def) { skText('—', x + w / 2, yy + 45, 12, SK.paperFaint, 'center'); continue; }
+    if (!def) { skText('—', x + w / 2, yy + 32, 12, SK.paperFaint, 'center'); continue; }
     ctx.save();
-    drawTowerEmblem(ti, x + w / 2, yy + 38, .96, -.45);
+    drawTowerEmblem(ti, x + w / 2, yy + 25, .7, -.45);
     ctx.restore();
-    skText(def.name, x + w / 2, yy + 69, 9.5, active === ti ? SK.paper : '#e0d4bd', 'center', 400, false, .3);
-    skText(Math.round(buildCost(ti)) + ' ⚡', x + w / 2, yy + 84, 7.8, SK.goldDim, 'center', 400, true, .4);
+    skText(def.name, x + w / 2, yy + 43, 8.2, active === ti ? SK.paper : '#e0d4bd', 'center', 400, false, .2);
+    skText(Math.round(buildCost(ti)) + ' ⚡', x + w / 2, yy + 57, 7.2, SK.goldDim, 'center', 400, true, .3);
     addHot('skin_build_' + i, x, yy, w, h, () => {
-      if (g.state !== 'build') return;
+      if (g.state !== 'build' && g.state !== 'loadout') return;
       if (!isTowerUnlocked(ti)) { setBanner('炮塔未解锁', '完成小关以解锁', '#b55a4d', 1.6); sfx('error'); return; }
       g.buildType = g.buildType === ti ? -1 : ti;
       g.targeting = null; g.selectedTower = null; sfx('select');
@@ -6166,7 +6166,7 @@ function skMenu(){
 
   /* marginalia */
   const rows = [
-    ['战斗', '1–4 选塔 · 左键放置 · 右键/Esc 取消'],
+    ['战斗', '1–6 选塔 · 左键放置 · 右键/Esc 取消'],
     ['节奏', '空格暂停 · S 倍速 · 每小关 6 波'],
     ['成长', 'Lv.3 专精二选一 · 首通解锁新炮塔'],
     ['敌情', '护甲 / 抗性 / 护盾 / 相位 / 干扰']
@@ -6276,7 +6276,7 @@ function skChapters(){
   addHot('skin_trial', cx - 90, cy - 30, 180, 94, () => { if (cu) openChallenges(); else { setBanner('试炼未解锁', '通关 3 个战役小关后开启', '#b55a4d', 2); sfx('error'); } }, cu ? '深渊试炼' : '未解锁');
 
   skLink('skin_back_menu', '返回', 70, 558, 11, SK.paperDim, () => openMenu(), '返回标题');
-  skText('每小关独立结算 · 首通解锁炮塔 · 初始 4 座', 886, 558, 7.8, SK.paperDim, 'right', 400, true, .7);
+  skText('每小关独立结算 · 首通解锁炮塔 · 每关携带 6 座', 886, 558, 7.8, SK.paperDim, 'right', 400, true, .7);
 }
 
 /* ---------- stages ---------- */
@@ -6288,7 +6288,7 @@ function skStages(){
   const challenge = !!g.challenge;
   const d = dimOf(challenge ? 6 : g.chapter);
   skText(challenge ? '深 渊 试 炼' : '章节 ' + d.roman + ' · ' + d.name, 74, 46, 24, challenge ? SK.red : SK.paper, 'left', 400, false, 5);
-  skText(challenge ? '三档试炼 · 按顺序解锁 · 每档六波 · 大幅强化的敌群与终维首领' : '按顺序通关解锁 · 每关六波 · 进入后重新选择四座炮塔', 76, 68, 8.5, SK.paperDim, 'left', 400, true, .7);
+  skText(challenge ? '三档试炼 · 按顺序解锁 · 每档六波 · 大幅强化的敌群与终维首领' : '按顺序通关解锁 · 每关六波 · 进入后重新选择六座炮塔', 76, 68, 8.5, SK.paperDim, 'left', 400, true, .7);
   skLine(74, 84, 886, 84, SK.goldDim, 1);
 
   /* chapter emblem: a small galaxy portrait in the header */
@@ -6340,7 +6340,7 @@ function skStages(){
       skText(info.bossKey ? '首领镇守 · ' + (ENEMY_TYPES[info.bossKey] ? ENEMY_TYPES[info.bossKey].name : '未知') : '六波推进', x, 398, 8, info.bossKey ? '#d59a8c' : SK.paperDim, 'center', 400, true, .5);
     }
     const act = () => { if (unlocked) startStage(challenge ? 6 : g.chapter, s + 1, challenge, challenge ? s + 1 : 0); else { setBanner('关卡未解锁', '先通关上一小关', '#d59a8c', 2.2); sfx('error'); } };
-    skLink('skin_stage_btn_' + s, unlocked ? '进入小关' : '未解锁', x, 424, 11, unlocked ? d.color : SK.paperFaint, act, unlocked ? '开始后选择 4 座炮塔' : '先通关上一小关', 'center', !unlocked);
+    skLink('skin_stage_btn_' + s, unlocked ? '进入小关' : '未解锁', x, 424, 11, unlocked ? d.color : SK.paperFaint, act, unlocked ? '开始后选择 6 座炮塔' : '先通关上一小关', 'center', !unlocked);
     addHot('skin_stage_' + s, x - 82, y - 74, 164, 164, act, unlocked ? info.name : '未解锁 · 先通关上一小关');
   }
   skLink('skin_back_chapters', '返回星图', 70, 558, 10.5, SK.paperDim, () => openChapters(), '返回章节选择');
@@ -6355,8 +6355,8 @@ function skLoadout(){
   fullBlock(0);
   skBorder();
   skText('战 前 配 置', 480, 43, 26, SK.paper, 'center', 500, false, 6);
-  skText('从 ' + TOWERS.length + ' 座炮塔中选取 4 座 · 每章 6 座 · 下一关重新选择', 480, 65, 8.5, SK.paperDim, 'center', 400, true, .6);
-  skText((g.challenge ? 'TRIAL ' + ['I','II','III'][g.stage - 1] : 'CHAPTER ' + d.roman + ' · STAGE ' + g.stage) + '   ·   SELECTED ' + g.loadout.length + ' / 4   ·   UNLOCKED ' + PROGRESS.unlocked.length + ' / ' + TOWERS.length, 480, 82, 7.5, d.color, 'center', 400, true, 1.1);
+  skText('从 ' + TOWERS.length + ' 座炮塔中选取 ' + LOADOUT_SIZE + ' 座 · 每章 6 座 · 下一关重新选择', 480, 65, 8.5, SK.paperDim, 'center', 400, true, .6);
+  skText((g.challenge ? 'TRIAL ' + ['I','II','III'][g.stage - 1] : 'CHAPTER ' + d.roman + ' · STAGE ' + g.stage) + '   ·   SELECTED ' + g.loadout.length + ' / ' + LOADOUT_SIZE + '   ·   UNLOCKED ' + PROGRESS.unlocked.length + ' / ' + TOWERS.length, 480, 82, 7.5, d.color, 'center', 400, true, 1.1);
   skLine(56, 92, 904, 92, SK.goldDim, 1);
 
   const cw = 144, chh = 56, gapX = 4, x0 = 68, y0 = 104, gapY = 6;
@@ -6409,15 +6409,15 @@ function skLoadout(){
   }
 
   skLine(356, 542, 604, 542, SK.goldDim, 1);
-  if (g.loadout.length === 4) {
+  if (g.loadout.length === LOADOUT_SIZE) {
     skLink('skin_confirm', '锁定配置 · 进入战场', 480, 524, 14, SK.paper, () => confirmLoadout(), '开始本关', 'center');
   } else {
     skText('锁定配置 · 进入战场', 480, 524, 14, SK.paperDim, 'center', 400, false, 1);
-    addHot('skin_confirm_dis', 340, 510, 280, 32, () => { setBanner('配置未完成', '需要选择 4 座炮塔', '#b55a4d', 2); sfx('error'); }, '选择 4 座炮塔后开始');
+    addHot('skin_confirm_dis', 340, 510, 280, 32, () => { setBanner('配置未完成', '需要选择 ' + LOADOUT_SIZE + ' 座炮塔', '#b55a4d', 2); sfx('error'); }, '选择 ' + LOADOUT_SIZE + ' 座炮塔后开始');
   }
   skLink('skin_recommend', '本关推荐组合', 680, 524, 11, SK.paperDim, () => recommendLoadout(), '一键选取推荐炮塔');
   skText('提示：敌方具有护甲、抗性、护盾、相位与干扰；单一伤害类型会被克制。', 480, 558, 7.5, SK.paperDim, 'center', 400, true, .5);
-  skText('初始仅 4 座 · 每关独立配装 · 首通逐步解锁', 480, 572, 7.5, SK.paperDim, 'center', 400, true, .5);
+  skText('每关携带 6 座 · 每关独立配装 · 首通逐步解锁', 480, 572, 7.5, SK.paperDim, 'center', 400, true, .5);
 }
 
 /* ---------- reward ---------- */
@@ -7560,7 +7560,7 @@ function skMenuHolo(){
 
   /* instructions, one line at a time */
   const rows = [
-    ['战斗', '1–4 选塔 · 左键放置 · 右键/Esc 取消'],
+    ['战斗', '1–6 选塔 · 左键放置 · 右键/Esc 取消'],
     ['节奏', '空格暂停 · S 倍速 · 每小关 6 波'],
     ['成长', 'Lv.3 专精二选一 · 首通解锁新炮塔'],
     ['敌情', '护甲 / 抗性 / 护盾 / 相位 / 干扰']
@@ -10178,9 +10178,9 @@ function endlessOpLabel(t){
 /* ---------- 无尽配置 ---------- */
 function recommendedEndless(){
   const g = game;
-  g.loadout = ENDLESS_DEFAULT.map(k => TOWER_INDEX[k]).filter(i => i != null);
+  g.loadout = ENDLESS_KEYS.map(k => TOWER_INDEX[k]).filter(i => i != null);
   sfx('select');
-  addFloater(480, 300, '已填入 4 座无尽机制塔', '#c58bff', 14);
+  addFloater(480, 300, '已填入 6 座无尽机制塔', '#c58bff', 14);
 }
 function openEndless(){
   const g = game;
@@ -10199,11 +10199,12 @@ function openEndless(){
   g.score = 0;
   g.kills = 0;
   g.leaks = 0;
-  g.loadout = ENDLESS_DEFAULT.map(k => TOWER_INDEX[k]).filter(i => i != null);
+  g.loadout = ENDLESS_KEYS.map(k => TOWER_INDEX[k]).filter(i => i != null);
   g.nextPlan = planEndlessWave(1);
   g.nextPlan.wave = 1;
   g.endlessBest = endlessBest();
   g.armoryCollapsed = false;
+  g.endlessResupply = false;
   setBanner('无尽回廊', '42 座防御塔 · 敌人无限成长 · 每 10 波首领', '#c58bff', 3.2);
   sfx('start');
 }
@@ -10253,7 +10254,7 @@ function planEndlessWave(wave){
 }
 function startEndlessWave(){
   const g = game;
-  if (g.state !== 'build' || g.loadout.length !== 4) return false;
+  if (g.state !== 'build' || g.loadout.length !== LOADOUT_SIZE) return false;
   g.wave++;
   const plan = planEndlessWave(g.wave);
   g.plan = plan;
@@ -10353,10 +10354,10 @@ function drawEndlessLoadout(){
   const g = game;
   skBackdrop(g.clock); fullBlock(0); skBorder();
   skText('无 尽 配 置', 480, 32, 24, SK.paper, 'center', 300, false, 4);
-  skText('ENDLESS ARMORY · 42 座塔任选 4 座 · 每波敌人成长', 480, 50, 7.5, SK.goldDim, 'center', 400, true, 1.4);
+  skText(g.endlessResupply ? 'ENDLESS RESUPPLY · 场上炮塔全部保留 · 更换携带 ' + LOADOUT_SIZE + ' 座' : 'ENDLESS ARMORY · 42 座塔任选 ' + LOADOUT_SIZE + ' 座 · 每波敌人成长', 480, 50, 7.5, SK.goldDim, 'center', 400, true, 1.4);
   skLine(100, 62, 860, 62, SK.goldFaint, 1);
   skText('CHAPTER I–VI + ∞', 480, 78, 7, SK.goldDim, 'center', 400, true, 1);
-  skText('已选 ' + g.loadout.length + ' / 4', 880, 78, 8, g.loadout.length === 4 ? SK.gold : SK.paperDim, 'right', 500, true, .6);
+  skText('已选 ' + g.loadout.length + ' / ' + LOADOUT_SIZE, 880, 78, 8, g.loadout.length === LOADOUT_SIZE ? SK.gold : SK.paperDim, 'right', 500, true, .6);
 
   const rows = [0, 1, 2, 3, 4, 5, 6];
   const x0 = 64, cw = 140, gap = 6, y0 = 88, ch = 58, vgap = 5;
@@ -10391,9 +10392,9 @@ function drawEndlessLoadout(){
     }
   }
 
-  skLink('endless_back', '返回星图', 96, 566, 9, SK.paperDim, () => openChaptersFromEndless(), '返回星图', 'left');
-  skLink('endless_confirm', '锁定配置 · 进入无尽', 480, 566, 12, SK.gold, () => confirmLoadout(), g.loadout.length === 4 ? '开始无尽回廊' : '先选满 4 座', 'center', g.loadout.length !== 4);
-  skLink('endless_recommend', '无尽推荐组合', 790, 566, 9, SK.paperDim, () => recommendedEndless(), '填入 4 座无尽机制塔', 'center');
+  skLink('endless_back', g.endlessResupply ? '取消更换' : '返回星图', 96, 566, 9, SK.paperDim, () => { if (g.endlessResupply) cancelEndlessResupply(); else openChaptersFromEndless(); }, g.endlessResupply ? '保留原配置返回战场' : '返回星图', 'left');
+  skLink('endless_confirm', g.endlessResupply ? '确认更换 · 返回战场' : '锁定配置 · 进入无尽', 480, 566, 12, SK.gold, () => confirmLoadout(), g.loadout.length === LOADOUT_SIZE ? '开始无尽回廊' : '先选满 ' + LOADOUT_SIZE + ' 座', 'center', g.loadout.length !== LOADOUT_SIZE);
+  skLink('endless_recommend', '无尽推荐组合', 790, 566, 9, SK.paperDim, () => recommendedEndless(), '填入 6 座无尽机制塔', 'center');
   skText('机制塔：深渊猎手 / 蓄能棱镜 / 共鸣核心 / 残骸回收器 / 虚空锚点 / 蜂群母巢', 480, 594, 6.5, SK.paperFaint, 'center', 400, true, .5);
 }
 
@@ -10601,7 +10602,16 @@ const _v28BaseConfirm = confirmLoadout;
 confirmLoadout = function(){
   const g = game;
   if (!g || !g.endlessMode) return _v28BaseConfirm();
-  if (g.state !== 'loadout' || g.loadout.length !== 4) { sfx('error'); return false; }
+  if (g.state !== 'loadout' || g.loadout.length !== LOADOUT_SIZE) { sfx('error'); return false; }
+  if (g.endlessResupply) {
+    g.endlessResupply = false;
+    g.state = 'build';
+    g.buildType = -1;
+    g.selectedTower = null;
+    setBanner('补给完成', '场上炮台保留 · 新配置已生效', '#c58bff', 2.2);
+    sfx('start');
+    return true;
+  }
   g.state = 'build';
   g.buildType = -1;
   g.selectedTower = null;
@@ -10611,6 +10621,45 @@ confirmLoadout = function(){
   sfx('start');
   return true;
 };
+
+/* ---------- 每 10 波：保留场上炮台，只换携带 ---------- */
+function openEndlessResupply(){
+  const g = game;
+  if (!g || !g.endlessMode) return false;
+  g.endlessResupply = true;
+  g.endlessResupplyDue = false;
+  g.state = 'loadout';
+  g.buildType = -1;
+  g.selectedTower = null;
+  g.targeting = null;
+  setBanner('无尽补给', '第 ' + g.wave + ' 波已清 · 场上炮塔保留，可更换携带', '#c58bff', 3);
+  sfx('select');
+  return true;
+}
+function cancelEndlessResupply(){
+  const g = game;
+  if (!g || !g.endlessResupply) return false;
+  g.endlessResupply = false;
+  g.state = 'build';
+  g.buildType = -1;
+  setBanner('保留原配置', '携带炮台未更换', '#8a8375', 1.8);
+  sfx('click');
+  return true;
+}
+const _v30ResolveWave = resolveWave;
+resolveWave = function(){
+  const g = game;
+  if (g && g.endlessMode && g.state === 'fight' && !g.waveResolved && g.wave % 10 === 0) g.endlessResupplyDue = true;
+  return _v30ResolveWave();
+};
+function _afterEndlessReward(){
+  const g = game;
+  if (g && g.endlessMode && g.endlessResupplyDue && g.state === 'build') openEndlessResupply();
+}
+const _v30ChooseReward = chooseReward;
+chooseReward = function(i){ const r = _v30ChooseReward(i); if (r) _afterEndlessReward(); return r; };
+const _v30SkipReward = skipReward;
+skipReward = function(){ const r = _v30SkipReward(); if (r) _afterEndlessReward(); return r; };
 
 /* ---------- 无尽快捷键/点击 ---------- */
 window.addEventListener('keydown', function(e){
