@@ -1809,6 +1809,12 @@ function updateEnemies(dt){
         }
       }
     }
+    if (e.type.enrage && !e.enraged && e.hp < e.maxHp * 0.4) {
+      e.enraged = true;
+      e.speed *= 1.45;
+      addFloater(e.x, e.y - e.r - 18, '狂暴!', '#ffb066', 11);
+      addRing(e.x, e.y, 4, e.r + 18, '#ffb066', .35, 2);
+    }
     if (e.boss && !e.enraged && e.hp < e.maxHp * 0.32) {
       e.enraged = true;
       e.speed *= 1.22;
@@ -9704,11 +9710,49 @@ function codexWeak(key){
     }
     if (out.length) return '弱点 · ' + out.join(' / ');
   }
-  if (t.phase) return '对策 · 减速 / 范围覆盖';
+  if (t.phase) return '对策 · 等现身集火；提前减速可拖慢相位期';
   if (t.armor) return '对策 · 穿甲 / 爆破';
   if (t.shield || t.regen) return '对策 · 爆发 / 剧毒';
   if (t.summon || t.heal) return '对策 · 优先点杀 / 范围';
   return '对策 · 集火与减速';
+}
+
+
+/* ---- 能力详解（首次出现简报用） ---- */
+function wrapCjk(text, max){
+  const out = [];
+  let cur = '';
+  for (const ch of String(text)) {
+    cur += ch;
+    if (cur.length >= max) { out.push(cur); cur = ''; }
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+function codexAbilityDetails(key){
+  const t = codexType(key);
+  const arr = [];
+  const pct = v => Math.round(v * 100) + '%';
+  if (t.armor) arr.push({ name: '护甲', text: '物理减伤 ' + pct(t.armor) + '%；能量/虚空仅受其 45% 影响；穿甲/爆破可削弱。' });
+  if (t.resist) arr.push({ name: '抗性', text: '所有非真实伤害降低 ' + pct(t.resist) + '。' });
+  if (t.ward) {
+    const names = [];
+    for (const k of Object.keys(t.ward)) names.push((DMG_INFO[k] ? DMG_INFO[k].name : k) + ' -' + pct(t.ward[k]));
+    if (names.length) arr.push({ name: '元素抗性', text: names.join('、') + '；换一种伤害类型打。' });
+  }
+  if (t.shield) arr.push({ name: '护盾', text: '护盾 ' + Math.round(t.shield) + '：优先吸收伤害；脱战 3.2 秒后每秒回充 3.5%。能量伤害 ×1.35，虚空 ×1.2，物理 ×0.85。' });
+  if (t.regen) arr.push({ name: '再生', text: '每秒回复最大生命的 ' + (Math.round(t.regen * 1000) / 10) + '%。爆发伤害与剧毒可压制。' });
+  if (t.phase) arr.push({ name: '相位', text: '每 5.6 秒相位 2.1 秒：免伤、不可锁定，弹道/连锁/溅射跳过；减速仍生效，等现身集火。' });
+  if (t.split) arr.push({ name: '分裂', text: '死亡时分裂出 ' + t.split + ' 只子体：30% 生命、115% 速度，子体不再分裂。' });
+  if (t.summon) arr.push({ name: '召唤', text: '每 8 秒召唤 2 只低血量随从；首领每 11 秒召唤 3 只。优先处理召唤者。' });
+  if (t.heal) arr.push({ name: '治疗', text: '每 3.2 秒治疗 130 范围内友军 8% 最大生命。优先点杀治疗者或用范围伤害覆盖。' });
+  if (t.boom) arr.push({ name: '自爆', text: '被击杀时爆炸，使附近防御塔停火 1.5 秒。尽量远程击杀或在安全距离处理。' });
+  if (t.siege) arr.push({ name: '压制', text: '每 5.5 秒压制 190 范围内最近的防御塔 2 秒；首领每 7 秒。用射程或分散站位应对。' });
+  if (t.disrupt) arr.push({ name: '干扰', text: '每 ' + t.disrupt + ' 秒干扰一座随机防御塔 1.2 秒（首领 1.8 秒）。保持多塔覆盖。' });
+  if (t.enrage) arr.push({ name: '狂暴', text: '生命低于 40% 时移速 +45%。留爆发在残血阶段，或提前减速。' });
+  if (t.leech) arr.push({ name: '汲取', text: '突破核心时额外扣除 ' + t.leech + ' 能量。别让它漏过去。' });
+  if (!arr.length) arr.push({ name: '无特殊能力', text: '标准单位，集火与减速即可。' });
+  return arr;
 }
 
 /* ---- 新怪简报（每关开始前） ---- */
@@ -9773,11 +9817,11 @@ function drawBriefing(){
   const key = g.codexQueue[g.codexPage];
   const d = codexDimOf(key);
   const t = codexType(key);
-  skFrame(180, 64, 600, 468, 12, SK.goldDim, 'rgba(4,8,14,.97)');
-  skCorner(192, 76, 576, 444, 8, SK.goldFaint);
+  skFrame(140, 64, 680, 468, 12, SK.goldDim, 'rgba(4,8,14,.97)');
+  skCorner(152, 76, 656, 444, 8, SK.goldFaint);
   skText('新 敌 情', 480, 106, 24, SK.paper, 'center', 500, false, 5);
   skText('NEW HOSTILE · ' + d.name + ' · ' + (g.codexPage + 1) + ' / ' + g.codexQueue.length, 480, 126, 7.5, d.color, 'center', 400, true, 1);
-  skLine(220, 142, 740, 142, SK.goldDim, 1);
+  skLine(180, 142, 780, 142, SK.goldDim, 1);
 
   ctx.save();
   ctx.strokeStyle = rgba(d.color, .5);
@@ -9790,14 +9834,23 @@ function drawBriefing(){
   e.x = 320; e.y = 300; e.boss = false;
   e.r = 34; e.hp = e.maxHp; e.speed = 0;
   drawEnemy(e);
-  skText(t.name || key, 500, 178, 21, SK.paper, 'left', 500, false, 2);
-  skText(t.desc || '', 500, 201, 9, SK.paperDim, 'left', 400);
-  skText('特性', 500, 232, 8, SK.goldDim, 'left', 600, true, 1.5);
-  const traits = codexTraits(key);
-  for (let i = 0; i < Math.min(3, traits.length); i++) skText('· ' + traits[i], 500, 249 + i * 17, 9, SK.paper, 'left', 400);
-  skText('弱点 / 对策', 500, 300, 8, SK.goldDim, 'left', 600, true, 1.5);
-  skText(codexWeak(key), 500, 318, 9, SK.green, 'left', 400);
-  skText('首次发现已记录至总图鉴', 500, 345, 7.5, SK.paperFaint, 'left', 400, true);
+  skText(t.name || key, 500, 174, 21, SK.paper, 'left', 500, false, 2);
+  skText(t.desc || '', 500, 197, 8.5, SK.paperDim, 'left', 400);
+  skText('能力详解', 480, 220, 8, SK.goldDim, 'left', 600, true, 1.5);
+  const details = codexAbilityDetails(key);
+  let line = 0;
+  for (const ab of details) {
+    const lines = wrapCjk('· ' + ab.name + '：' + ab.text, 34);
+    for (const ln of lines) {
+      if (line >= 4) break;
+      skText(ln, 480, 237 + line * 18, 10, rgba(236,251,255,.98), 'left', 400);
+      line++;
+    }
+    if (line >= 5) break;
+  }
+  skText('弱点 / 对策', 480, 330, 8, SK.goldDim, 'left', 600, true, 1.5);
+  skText(codexWeak(key), 480, 347, 8.4, SK.green, 'left', 400);
+  skText('首次发现已记录至总图鉴', 480, 366, 6.8, SK.paperFaint, 'left', 400, true);
   skLink('codex_next', g.codexPage < g.codexQueue.length - 1 ? '下一只' : '开始防守', 480, 475, 13, SK.gold, () => codexNext(), '确认敌情后开始', 'center');
   skLink('codex_skip', '跳过介绍', 480, 505, 8.5, SK.paperDim, () => codexSkip(), '直接开始本关', 'center');
 }
