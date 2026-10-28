@@ -9800,13 +9800,31 @@ function openBestiary(){
   const g = game;
   if (!g) return false;
   g.codexReturn = g.state;
+  g.codexDetail = null;
   g.state = 'codex';
   return true;
 }
 function closeBestiary(){
   const g = game;
   if (!g || g.state !== 'codex') return false;
+  g.codexDetail = null;
   g.state = g.codexReturn || 'chapters';
+  return true;
+}
+
+function openCodexDetail(key){
+  const g = game;
+  if (!g || g.state !== 'codex') return false;
+  if (!CODEX_ADMIN() && codexSeen().indexOf(key) < 0) return false;
+  g.codexDetail = key;
+  sfx('click');
+  return true;
+}
+function closeCodexDetail(){
+  const g = game;
+  if (!g || g.state !== 'codex') return false;
+  g.codexDetail = null;
+  sfx('click');
   return true;
 }
 
@@ -9855,9 +9873,74 @@ function drawBriefing(){
   skLink('codex_skip', '跳过介绍', 480, 505, 8.5, SK.paperDim, () => codexSkip(), '直接开始本关', 'center');
 }
 
+
+/* ---- 绘制：单只怪物详情 ---- */
+function drawCodexDetail(key){
+  const g = game;
+  const t = codexType(key);
+  const d = codexDimOf(key);
+  const seen = codexSeen();
+  if (!CODEX_ADMIN() && seen.indexOf(key) < 0) { g.codexDetail = null; return; }
+  skFrame(40, 44, 880, 516, 12, SK.goldDim, 'rgba(4,8,14,.97)');
+  skCorner(52, 56, 856, 492, 8, SK.goldFaint);
+  skText('怪 物 图 鉴', 480, 80, 24, SK.paper, 'center', 500, false, 5);
+  skText('BESTIARY // ' + d.name + ' · 资料页', 480, 100, 7.5, d.color, 'center', 400, true, 1);
+  skLine(74, 112, 886, 112, SK.goldDim, 1);
+
+  ctx.save();
+  ctx.strokeStyle = rgba(d.color, .5);
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(240, 300, 62, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(240, 300, 56, 0, TAU); ctx.stroke();
+  ctx.restore();
+  skText('SPECIMEN FILE', 240, 226, 6.8, rgba(d.color, .9), 'center', 400, true, 1.2);
+  const e = makeEnemy(key, d.dim || 1, 6, false, {});
+  e.x = 240; e.y = 300; e.hp = e.maxHp; e.speed = 0; e.r = 50;
+  drawEnemy(e);
+
+  skText(t.name || key, 380, 146, 22, SK.paper, 'left', 500, false, 2);
+  skText((d.short || '') + ' · ' + (t.role || '异种') + ' · ' + d.name, 380, 169, 8.2, d.color, 'left', 400, true, 1);
+  const descLines = wrapCjk(t.desc || '来自深渊的未知存在。', 44);
+  for (let i = 0; i < Math.min(2, descLines.length); i++) {
+    skText(descLines[i], 380, 188 + i * 15, 9.2, '#d8e9f4', 'left', 400);
+  }
+
+  const stats = [
+    ['生命', Math.round(t.hp || 0)],
+    ['移速', Math.round(t.speed || 0)],
+    ['护甲', t.armor ? Math.round(t.armor * 100) + '%' : '—'],
+    ['护盾', t.shield ? Math.round(t.shield) : '—']
+  ];
+  for (let i = 0; i < stats.length; i++) {
+    const x = 380 + i * 116;
+    skText(stats[i][0], x, 228, 7.2, '#9ab4c8', 'left', 400, true, 1);
+    skText(String(stats[i][1]), x, 246, 15, SK.paper, 'left', 500);
+  }
+  skText('特性  ' + codexTraits(key).join(' · '), 380, 273, 8.2, '#cfe5f3', 'left', 400);
+
+  skText('能力详解', 380, 292, 9, '#ffd89a', 'left', 600, true, 1.5);
+  let yy = 312;
+  for (const ab of codexAbilityDetails(key)) {
+    if (yy > 500) break;
+    skText('◆ ' + ab.name, 380, yy, 9.4, '#ffd89a', 'left', 500, true, .5);
+    yy += 15;
+    for (const ln of wrapCjk(ab.text, 46)) {
+      if (yy > 508) break;
+      skText(ln, 394, yy, 9.0, '#ecfbff', 'left', 400);
+      yy += 14;
+    }
+  }
+  const wy = Math.min(516, Math.max(424, yy + 10));
+  skText('弱点 / 对策', 380, wy, 7.6, SK.goldDim, 'left', 600, true, 1.2);
+  skText(codexWeak(key), 380, wy + 14, 8.8, '#b8f5d0', 'left', 400);
+  skLink('codex_detail_back', '返回图鉴', 300, 550, 10, '#b9d5e4', () => closeCodexDetail(), '回到图鉴列表', 'center');
+  skLink('codex_detail_close', '关闭图鉴', 660, 550, 10, '#ffd89a', () => closeBestiary(), '返回星图', 'center');
+}
+
 /* ---- 绘制：总图鉴 ---- */
 function drawCodex(){
   const g = game;
+  if (g && g.codexDetail) { drawCodexDetail(g.codexDetail); return; }
   const seen = codexSeen();
   const admin = CODEX_ADMIN();
   skFrame(40, 44, 880, 516, 12, SK.goldDim, 'rgba(4,8,14,.97)');
@@ -9891,12 +9974,12 @@ function drawCodex(){
       const tr = codexTraits(key).slice(0, 2).join(' · ');
       skText(tr, x + 46, y + 45, 6.4, SK.paperDim, 'left', 400);
       skText(codexWeak(key).replace('弱点 · ', '弱 ').replace('对策 · ', ''), x + 46, y + 57, 6.2, SK.green, 'left', 400);
-      addHot('codex_card_' + i, x, y, cw, ch, null, codexType(key).name + '\n' + (codexType(key).desc || '') + '\n' + codexTraits(key).join(' · ') + '\n' + codexWeak(key));
+      addHot('codex_card_' + i, x, y, cw, ch, () => openCodexDetail(key), codexType(key).name + '\n' + (codexType(key).desc || '') + '\n' + codexTraits(key).join(' · ') + '\n' + codexWeak(key));
     } else {
       skText('？', x + 22, y + 38, 19, 'rgba(150,170,180,.35)', 'center', 500);
       skText('未发现', x + 46, y + 22, 8, 'rgba(160,170,180,.42)', 'left', 400);
       skText(d.short, x + 46, y + 38, 6.8, 'rgba(160,170,180,.3)', 'left', 400);
-      addHot('codex_card_' + i, x, y, cw, ch, null, '未发现 · 在该维度击败后解锁');
+      addHot('codex_card_' + i, x, y, cw, ch, () => setBanner('尚未发现', '在对应维度击败后解锁', '#b8846e', 1.6), '未发现 · 在该维度击败后解锁');
     }
   }
   skLink('codex_back', '返回星图', 70, 584, 10, SK.paperDim, () => closeBestiary(), '返回上一页');
@@ -9938,6 +10021,8 @@ if (typeof window !== 'undefined' && window.__AG) {
   window.__AG.briefingNext = codexNext;
   window.__AG.briefingSkip = codexSkip;
   window.__AG.codexSeen = () => codexSeen().slice();
+  window.__AG.codexDetail = key => { if (game) game.codexDetail = key; };
+  window.__AG.codexDetailClose = closeCodexDetail;
 }
 </script>
 </body>
