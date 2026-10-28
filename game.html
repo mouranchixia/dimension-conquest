@@ -2194,7 +2194,7 @@ function tryBuild(x, y, silent){
   addBurst(x, y, t.type.color, 14, 70);
   addFloater(x, y - 28, '-' + cost, '#5ad8ff', 12);
   sfx('build');
-  if (!silent) g.buildType = -1;
+  /* 保持当前炮塔选择：可以连续放置同一种炮塔 */
   return true;
 }
 function buildTower(x, y, ti){
@@ -3011,7 +3011,7 @@ function drawBuildBar(){
   const g = game;
   const list = dimTowers(g.dimension);
   txt('建造', 14, 512, 9, 'rgba(150,178,214,.8)', 'left', 700);
-  txt('1-4 选择 · 左键放置 · 右键取消', 56, 512, 8, 'rgba(130,158,196,.55)', 'left', 500);
+  txt('1-4 选择 · 左键连续放置 · 右键取消', 56, 512, 8, 'rgba(130,158,196,.55)', 'left', 500);
   const w = 110, gap = 4, x0 = 10, y = BAR_Y;
   for (let i = 0; i < list.length; i++) {
     const def = list[i];
@@ -4562,7 +4562,7 @@ function drawBuildBar(){
   const g = game;
   const list = g.loadout.map(ti => ({ ti, def: TOWERS[ti] })).filter(x => x.def);
   txt('配置', 14, 512, 9, 'rgba(150,178,214,.8)', 'left', 700);
-  txt('1-4 选择 · 左键放置 · 右键取消 · 战前可选配置', 52, 512, 8, 'rgba(130,158,196,.55)', 'left', 500);
+  txt('1-4 选择 · 左键连续放置 · 右键取消 · 战前可选配置', 52, 512, 8, 'rgba(130,158,196,.55)', 'left', 500);
   const w = 110, gap = 4, x0 = 10, y = BAR_Y;
   for (let i = 0; i < list.length; i++) {
     const def = list[i].def;
@@ -5126,7 +5126,7 @@ function drawMenu(){
   rr(ax - 250, 402, 500, 116, 10); ctx.fill();
   ctx.strokeStyle = 'rgba(110,160,220,.16)'; ctx.lineWidth = 1; rr(ax - 250, 402, 500, 116, 10); ctx.stroke();
   const rows = [
-    ['战斗', '1–6 选塔 · 左键放置 · 右键/Esc 取消'],
+    ['战斗', '1–6 选塔 · 左键连续放置 · 右键/Esc 取消'],
     ['节奏', '空格 暂停 · S 倍速 · 每小关 6 波'],
     ['成长', 'Lv.3 专精二选一 · 通关解锁新炮塔'],
     ['敌情', '护甲 / 抗性 / 护盾 / 相位 / 干扰，克制与配合是关键']
@@ -6166,7 +6166,7 @@ function skMenu(){
 
   /* marginalia */
   const rows = [
-    ['战斗', '1–6 选塔 · 左键放置 · 右键/Esc 取消'],
+    ['战斗', '1–6 选塔 · 左键连续放置 · 右键/Esc 取消'],
     ['节奏', '空格暂停 · S 倍速 · 每小关 6 波'],
     ['成长', 'Lv.3 专精二选一 · 首通解锁新炮塔'],
     ['敌情', '护甲 / 抗性 / 护盾 / 相位 / 干扰']
@@ -7540,7 +7540,7 @@ function skMenuHolo(){
 
   /* instructions, one line at a time */
   const rows = [
-    ['战斗', '1–6 选塔 · 左键放置 · 右键/Esc 取消'],
+    ['战斗', '1–6 选塔 · 左键连续放置 · 右键/Esc 取消'],
     ['节奏', '空格暂停 · S 倍速 · 每小关 6 波'],
     ['成长', 'Lv.3 专精二选一 · 首通解锁新炮塔'],
     ['敌情', '护甲 / 抗性 / 护盾 / 相位 / 干扰']
