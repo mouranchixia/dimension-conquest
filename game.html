@@ -4920,6 +4920,7 @@ function startStage(dim, stage, challenge, trial){
   g.leaks = 0;
   g.best = PROGRESS.best;
   g.endless = false;
+  g.endlessMode = false;
   g.towers = [];
   g.loadout = [];
   g.boss = null;
@@ -5863,7 +5864,7 @@ function skBossBar(g){
   skText((b.phase >= 2 ? 'PHASE II' : 'PHASE I') + ' · ' + (b.summonT > 0 ? '召唤 ' + Math.ceil(b.summonT) + 's' : '震击 ' + Math.ceil(b.shockT) + 's'), x + w, y + 24, 6.5, SK.paperFaint, 'right', 400, true, .8);
 }
 function skWaveTicks(g){
-  if (g.endless) {
+  if (g.endlessMode) {
     const y = 70;
     skText('第 ' + (g.state === 'build' ? g.wave + 1 : g.wave) + ' 波', 244, y, 8, '#c58bff', 'right', 400, true, .8);
     for (let i = 0; i < 5; i++) skDiamond(300 + i * 34, y, i === 4 ? 4 : 3, i === 4 ? '#c58bff' : 'rgba(197,139,255,.25)', 'rgba(197,139,255,.45)');
@@ -10151,6 +10152,7 @@ function openEndless(){
   if (!g) return;
   resetStageView(g);
   g.endless = true;
+  g.endlessMode = true;
   g.dimension = 1;
   g.tier = 1;
   g.wave = 0;
@@ -10172,6 +10174,7 @@ function openEndless(){
 }
 function openChaptersFromEndless(){
   game.endless = false;
+  game.endlessMode = false;
   game.waveMax = WAVES_PER_DIM;
   openChapters();
 }
@@ -10426,6 +10429,7 @@ function drawEndlessPause(){
 /* ---------- 炮塔图鉴 ---------- */
 function openTowerCodex(){
   game.endless = false;
+  game.endlessMode = false;
   game.state = 'towerCodex';
   game.towerDetail = null;
   sfx('select');
@@ -10535,33 +10539,33 @@ render = function(){
 };
 const _v28BaseLoadout = skLoadout;
 skLoadout = function(){
-  if (game && game.endless) return drawEndlessLoadout();
+  if (game && game.endlessMode) return drawEndlessLoadout();
   return _v28BaseLoadout();
 };
 const _v28BaseOver = skGameOver;
 skGameOver = function(){
-  if (game && game.endless) return drawEndlessOver();
+  if (game && game.endlessMode) return drawEndlessOver();
   return _v28BaseOver();
 };
 const _v28BasePause = skPause;
 skPause = function(){
-  if (game && game.endless) return drawEndlessPause();
+  if (game && game.endlessMode) return drawEndlessPause();
   return _v28BasePause();
 };
 const _v28BaseTop = skTop;
 skTop = function(g){
-  if (g && g.endless) return drawEndlessTop(g);
+  if (g && g.endlessMode) return drawEndlessTop(g);
   return _v28BaseTop(g);
 };
 const _v28BaseStartWave = startWave;
 startWave = function(){
-  if (game && game.endless) return startEndlessWave();
+  if (game && game.endlessMode) return startEndlessWave();
   return _v28BaseStartWave();
 };
 const _v28BaseConfirm = confirmLoadout;
 confirmLoadout = function(){
   const g = game;
-  if (!g || !g.endless) return _v28BaseConfirm();
+  if (!g || !g.endlessMode) return _v28BaseConfirm();
   if (g.state !== 'loadout' || g.loadout.length !== 4) { sfx('error'); return false; }
   g.state = 'build';
   g.buildType = -1;
@@ -10586,7 +10590,7 @@ window.addEventListener('keydown', function(e){
 }, true);
 canvas.addEventListener('pointerdown', function(e){
   const g = game;
-  if (!g || !g.endless || g.state !== 'fight') return;
+  if (!g || !g.endlessMode || g.state !== 'fight') return;
   const t = g.selectedTower;
   if (!t || t.type.key !== 'abyss_hunter' || !t.manual) return;
   const p = pointerPos(e);
@@ -10607,7 +10611,7 @@ canvas.addEventListener('pointerdown', function(e){
 const _v28BaseGameOver = gameOver;
 gameOver = function(){
   const g = game;
-  if (g.endless) {
+  if (g.endlessMode) {
     if (g.state === 'over') return;
     g.state = 'over';
     g.endT = 0;
