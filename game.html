@@ -210,7 +210,7 @@ const DIMENSIONS = [
     tagline: '人类舰队的最后一道轨道防线。',
     color: '#5ad8ff', accent: '#bff4ff',
     towers: ['pulse', 'flame', 'frost', 'storm', 'orbital', 'prism'],
-    pool: ['scout', 'wisp', 'bulwark', 'repair'], boss: 'sentinel',
+    pool: ['scout', 'wisp', 'bulwark', 'repair', 'prober'], boss: 'sentinel', bosses: ['sentinel', 'warden'],
     startEnergy: 180,
     palette: {
       sky0: '#040914', sky1: '#0a1526', sky2: '#02050c',
@@ -224,7 +224,7 @@ const DIMENSIONS = [
     tagline: '恒星残骸中，熔火军团正在苏醒。',
     color: '#ff7a3a', accent: '#ffd166',
     towers: ['melter', 'mortar', 'solar', 'forge', 'magma_cannon', 'ember'],
-    pool: ['cinder', 'magma', 'ashwing', 'pyro'], boss: 'inferno',
+    pool: ['cinder', 'magma', 'ashwing', 'pyro', 'imp'], boss: 'inferno', bosses: ['inferno', 'cerberus'],
     startEnergy: 220,
     palette: {
       sky0: '#160604', sky1: '#2a0b06', sky2: '#080201',
@@ -238,7 +238,7 @@ const DIMENSIONS = [
     tagline: '绝对零度之下，时间也会冻结。',
     color: '#8ff0ff', accent: '#d8f4ff',
     towers: ['zero', 'lance', 'singularity', 'nova', 'icewall', 'comet'],
-    pool: ['frostling', 'wraith', 'golem', 'shard'], boss: 'zero',
+    pool: ['frostling', 'wraith', 'golem', 'shard', 'rime'], boss: 'zero', bosses: ['zero', 'eclipse'],
     startEnergy: 270,
     palette: {
       sky0: '#041018', sky1: '#0a2430', sky2: '#01070c',
@@ -252,7 +252,7 @@ const DIMENSIONS = [
     tagline: '星群本身，就是一头饥饿的巨兽。',
     color: '#b6ff6a', accent: '#7ee6c0',
     towers: ['acid', 'spore', 'brood', 'toxin', 'venom', 'mantis'],
-    pool: ['larva', 'spitter', 'brood', 'titan'], boss: 'queen',
+    pool: ['larva', 'spitter', 'brood', 'titan', 'sporeling'], boss: 'queen', bosses: ['queen', 'matriarch'],
     startEnergy: 320,
     palette: {
       sky0: '#0a0714', sky1: '#1a0a22', sky2: '#04020a',
@@ -266,7 +266,7 @@ const DIMENSIONS = [
     tagline: '整座星环，是一台没有心跳的战争机器。',
     color: '#4fffd0', accent: '#a8fff0',
     towers: ['tesla', 'railgun', 'swarm', 'uplink', 'pulse_laser', 'shieldpod'],
-    pool: ['sentry', 'raider', 'colossus', 'nexus'], boss: 'overmind',
+    pool: ['sentry', 'raider', 'colossus', 'nexus', 'mender'], boss: 'overmind', bosses: ['overmind', 'architect'],
     startEnergy: 380,
     palette: {
       sky0: '#061016', sky1: '#0a2228', sky2: '#02080a',
@@ -280,7 +280,7 @@ const DIMENSIONS = [
     tagline: '前五个维度的征服者，在此刻合而为一。',
     color: '#ffd166', accent: '#fff0c0',
     towers: ['sovereign', 'singularity2', 'annihilation', 'aegis', 'voidlance', 'chrono'],
-    pool: ['echo', 'tyrant', 'devourer', 'weaver', 'apex'], boss: 'sovereign',
+    pool: ['echo', 'tyrant', 'devourer', 'weaver', 'apex', 'lurker'], boss: 'sovereign', bosses: ['sovereign', 'hollow'],
     startEnergy: 450,
     palette: {
       sky0: '#0a0704', sky1: '#1a1208', sky2: '#020100',
@@ -518,7 +518,28 @@ const ENEMY_TYPES = {
   weaver:   { key: 'weaver', name: '织界者', hp: 340, speed: 35, dmg: 18, reward: 26, r: 14, color: '#ffd166', shape: 'summoner', heal: 150, summon: 8, desc: '治疗并召唤回响' },
   apex:     { key: 'apex', name: '终焉造物', hp: 980, speed: 28, dmg: 40, reward: 48, r: 22, color: '#ffe0a0', shape: 'apex', armor: .35, regen: .012, shield: 300, desc: '前五维技术的融合体' },
   sovereign:{ key: 'sovereign', name: '统御者', hp: 7000, speed: 16, dmg: 80, reward: 900, r: 44, color: '#ffd166', shape: 'final', armor: .35, resist: .2, boss: true, final: true,
-    minions: ['echo', 'tyrant'], skills: ['summon', 'dash', 'shock', 'rain', 'phase'], desc: '统领前五维的最终存在' }
+    minions: ['echo', 'tyrant'], skills: ['summon', 'dash', 'shock', 'rain', 'phase'], desc: '统领前五维的最终存在' },
+
+  /* ---- v29 新增小怪 ---- */
+  prober:   { key: 'prober', name: '轨道探针', hp: 46, speed: 118, dmg: 6, reward: 6, r: 7, color: '#9ef4ff', shape: 'dart', ward: { energy: .35 }, desc: '高速突进，优先消耗拦截火力' },
+  imp:      { key: 'imp', name: '熔火小鬼', hp: 52, speed: 104, dmg: 9, reward: 7, r: 8, color: '#ff9a5a', shape: 'demon', enrage: true, ward: { fire: .6 }, desc: '残血时狂暴，直冲核心' },
+  rime:     { key: 'rime', name: '霜蚀螨', hp: 140, speed: 32, dmg: 15, reward: 13, r: 13, color: '#a8e8ff', shape: 'tank', armor: .25, slowResist: .55, ward: { frost: .7 }, desc: '厚霜甲与减速抗性' },
+  sporeling:{ key: 'sporeling', name: '孢裂体', hp: 120, speed: 42, dmg: 12, reward: 12, r: 13, color: '#b8ff9a', shape: 'splitter', split: 2, splitKey: 'larva', ward: { bio: .6 }, desc: '死亡分裂为两只爆裂幼虫' },
+  mender:   { key: 'mender', name: '战地修补机', hp: 180, speed: 40, dmg: 10, reward: 15, r: 13, color: '#8fffe0', shape: 'healer', heal: 150, shield: 80, desc: '修复并护盾附近机械单位' },
+  lurker:   { key: 'lurker', name: '虚空潜伏者', hp: 260, speed: 55, dmg: 22, reward: 20, r: 14, color: '#d5a8ff', shape: 'ghost', phase: true, resist: .3, desc: '相位突进，现身瞬间爆发' },
+  /* ---- v29 新增首领 ---- */
+  warden:   { key: 'warden', name: '轨道典狱官', hp: 1200, speed: 24, dmg: 34, reward: 180, r: 32, color: '#7ce8ff', shape: 'boss', armor: .25, boss: true,
+    minions: ['scout', 'bulwark'], skills: ['summon', 'shock'], desc: '封锁轨道、召唤卫兵的典狱官' },
+  cerberus: { key: 'cerberus', name: '炼狱三首', hp: 1900, speed: 23, dmg: 46, reward: 260, r: 35, color: '#ff7a3a', shape: 'boss', armor: .28, boss: true,
+    minions: ['cinder', 'pyro'], skills: ['summon', 'dash', 'shock'], desc: '三颗头颅轮番喷吐熔火' },
+  eclipse:  { key: 'eclipse', name: '霜蚀日冕', hp: 2700, speed: 20, dmg: 50, reward: 320, r: 35, color: '#bff7ff', shape: 'boss', armor: .32, boss: true,
+    minions: ['frostling', 'shard'], skills: ['summon', 'shock', 'rain'], desc: '日冕冻蚀，范围冰风暴' },
+  matriarch:{ key: 'matriarch', name: '虫巢母体', hp: 3600, speed: 18, dmg: 56, reward: 400, r: 38, color: '#b6ff6a', shape: 'boss', armor: .25, boss: true,
+    minions: ['larva', 'spitter'], skills: ['summon', 'rain', 'shock'], desc: '不断孵化虫群的重型母体' },
+  architect:{ key: 'architect', name: '星环构装体', hp: 4800, speed: 18, dmg: 60, reward: 480, r: 39, color: '#4fffd0', shape: 'boss', armor: .34, boss: true,
+    minions: ['sentry', 'nexus'], skills: ['summon', 'dash', 'shock'], desc: '改写战场结构的机械构装体' },
+  hollow:   { key: 'hollow', name: '虚空之王', hp: 8500, speed: 15, dmg: 88, reward: 1000, r: 46, color: '#e0b8ff', shape: 'boss', armor: .36, resist: .2, boss: true,
+    minions: ['echo', 'weaver'], skills: ['summon', 'dash', 'shock', 'rain', 'phase'], desc: '统御者之后的虚空终主' }
 };
 const ENEMY_ORDER = Object.keys(ENEMY_TYPES);
 const ENEMY_MAP = ENEMY_TYPES;
@@ -1640,7 +1661,8 @@ function planWave(dim, wave){
     pick(cand).elite = pick(ELITE_MODS);
   }
   if (boss) {
-    list.push({ key: dimOf(dim).boss, at: (list[list.length - 1] ? list[list.length - 1].at : 1) + 2.6, elite: null });
+    const stageBoss = (typeof game !== 'undefined' && game && game.stageInfo && game.stageInfo.bossKey) ? game.stageInfo.bossKey : dimOf(dim).boss;
+    list.push({ key: stageBoss, at: (list[list.length - 1] ? list[list.length - 1].at : 1) + 2.6, elite: null });
   }
   const summary = {};
   for (const it of list) summary[it.key] = (summary[it.key] || 0) + 1;
@@ -1667,8 +1689,9 @@ function startWave(){
   g.selectedTower = null;
   g.tutorialT = 0;
   const d = dimOf(g.dimension);
+  const bossKeyNow = (g.stageInfo && g.stageInfo.bossKey) || d.boss;
   setBanner('维度 ' + d.roman + ' · 第 ' + g.wave + ' / ' + WAVES_PER_DIM + ' 波',
-    plan.boss ? '⚠ ' + ENEMY_TYPES[d.boss].name + ' 正在降临' : '守住核心',
+    plan.boss ? '⚠ ' + ENEMY_TYPES[bossKeyNow].name + ' 正在降临' : '守住核心',
     plan.boss ? '#ff4d6d' : d.color, 2.2);
   sfx(plan.boss ? 'boss' : 'start');
   return true;
@@ -3974,7 +3997,19 @@ const ART_LOOKS = {
   devourer:  { kind: 'demon',  wings: 2, legs: 2, horns: 2, eyes: 2, tail: true },
   weaver:    { kind: 'demon',  wings: 2, legs: 2, horns: 2, eyes: 3, crown: true },
   apex:      { kind: 'demon',  wings: 4, legs: 2, horns: 3, eyes: 4, armor: true },
-  sovereign: { kind: 'sovereign', wings: 6, legs: 2, horns: 3, eyes: 5, boss: true, crown: true }
+  sovereign: { kind: 'sovereign', wings: 6, legs: 2, horns: 3, eyes: 5, boss: true, crown: true },
+  prober:    { kind: 'drone',  wings: 2, legs: 0, horns: 0, eyes: 1, spikes: true },
+  imp:       { kind: 'demon',  wings: 2, legs: 2, horns: 2, eyes: 2, tail: true },
+  rime:      { kind: 'crystal',wings: 0, legs: 0, horns: 1, eyes: 2, spikes: true },
+  sporeling: { kind: 'insect', wings: 0, legs: 4, horns: 0, eyes: 3, spikes: true },
+  mender:    { kind: 'drone',  wings: 2, legs: 0, horns: 0, eyes: 1, rings: true },
+  lurker:    { kind: 'wraith', wings: 0, legs: 0, horns: 0, eyes: 2, hood: true, talons: true },
+  warden:    { kind: 'machine', wings: 0, legs: 0, horns: 2, eyes: 1, boss: true, rings: true, armor: true },
+  cerberus:  { kind: 'hound',  wings: 0, legs: 4, horns: 2, eyes: 6, tail: true, mane: true, boss: true, heads: 3 },
+  eclipse:   { kind: 'wraith', wings: 4, legs: 0, horns: 0, eyes: 3, hood: true, boss: true, crown: true },
+  matriarch: { kind: 'spider', wings: 0, legs: 8, horns: 2, eyes: 6, boss: true, crown: true },
+  architect: { kind: 'brain',  wings: 0, legs: 0, horns: 0, eyes: 3, boss: true, rings: true },
+  hollow:    { kind: 'sovereign', wings: 6, legs: 2, horns: 3, eyes: 5, boss: true, crown: true }
 };
 function artLook(e){ return ART_LOOKS[e.key] || { kind: 'insect', legs: 4, eyes: 2 }; }
 
@@ -4754,7 +4789,7 @@ function stageInfoOf(dim, stage, challenge, trial){
     key: challenge ? 'x' + stage : 'd' + dim + 's' + stage,
     name: challenge ? cnames[stage - 1] : names[stage - 1],
     chapterName: challenge ? '深渊试炼' : d.name,
-    bossKey: (challenge || stage === 3) ? d.boss : null,
+    bossKey: (challenge || stage === 3) ? (challenge ? d.boss : (d.bosses ? d.bosses[1] : d.boss)) : null,
     waves: CAMPAIGN.wavesPerStage
   };
 }
@@ -6207,7 +6242,7 @@ function skChapters(){
     skText(d.roman, n.x - rr + 2, n.y - rr + 2, 7.5, unlocked ? d.color : 'rgba(220,230,240,.35)', 'center', 600, true);
     skText(d.name, n.x, n.y + 54, 15, unlocked ? '#e8fbff' : 'rgba(232,251,255,.42)', 'center', 600, false, 1.4);
     if (unlocked) {
-      skText('首领 · ' + (ENEMY_TYPES[d.boss] ? ENEMY_TYPES[d.boss].name : '未知'), n.x, n.y + 71, 8.8, '#ff9aaa', 'center', 400);
+      skText('首领 · ' + (ENEMY_TYPES[d.bosses ? d.bosses[d.bosses.length - 1] : d.boss] ? ENEMY_TYPES[d.bosses ? d.bosses[d.bosses.length - 1] : d.boss].name : '未知'), n.x, n.y + 71, 8.8, '#ff9aaa', 'center', 400);
     } else {
       skText('未解锁 · 通关上一章', n.x, n.y + 71, 8.6, '#d59a8c', 'center', 400);
     }
@@ -10035,12 +10070,12 @@ function drawCodex(){
   skText('BESTIARY · 已记录 ' + seen.length + ' / ' + ENEMY_ORDER.length + ' 种 · 每一维度的敌群各不相同', 480, 102, 7.5, SK.paperDim, 'center', 400, true, .8);
   skLine(74, 112, 886, 112, SK.goldDim, 1);
 
-  const cw = 136, ch = 64, gap = 5, x0 = 58, y0 = 124, stepY = 69;
+  const cw = 112, ch = 56, gap = 5, x0 = 64, y0 = 116, stepY = 61;
   for (let i = 0; i < ENEMY_ORDER.length; i++) {
     const key = ENEMY_ORDER[i];
     const d = codexDimOf(key);
     const known = admin || seen.indexOf(key) >= 0;
-    const col = i % 6, row = Math.floor(i / 6);
+    const col = i % 7, row = Math.floor(i / 7);
     const x = x0 + col * (cw + gap), y = y0 + row * stepY;
     const hot = g.hoverHot && g.hoverHot.id === 'codex_card_' + i;
     ctx.save();
