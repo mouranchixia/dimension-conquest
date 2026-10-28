@@ -10724,6 +10724,150 @@ if (typeof window !== 'undefined' && window.__AG) {
   window.__AG.endlessTowerIndices = endlessTowerIndices;
   window.__AG.saveEndlessBest = saveEndlessBest;
 }
+/* 18_tower_identity.js — 42 座炮塔的独立轮廓、维度底座与专属攻击特效 */
+(function(){
+  const SIG = {
+    pulse:'twin', flame:'flame', frost:'shard', storm:'arc', orbital:'ring', prism:'fan',
+    melter:'flame', mortar:'shell', solar:'sun', forge:'anvil', magma_cannon:'star', ember:'beacon',
+    zero:'snow', lance:'spear', singularity:'ring', nova:'star', icewall:'wall', comet:'comet',
+    acid:'drop', spore:'pods', brood:'wall', toxin:'wave', venom:'acid', mantis:'blade',
+    tesla:'coil', railgun:'rail', swarm:'drone', uplink:'dish', pulse_laser:'grid', shieldpod:'shield',
+    sovereign:'crown', singularity2:'spiral', annihilation:'cross', aegis:'wall', voidlance:'spear', chrono:'clock',
+    abyss_hunter:'claw', charge_prism:'battery', resonator:'fork', reclaimer:'magnet', void_anchor:'anchor', swarm_queen:'pods'
+  };
+  const FX = {
+    pulse:'twin', flame:'cone', frost:'shard', storm:'arc', orbital:'dash', prism:'fan',
+    melter:'cone', mortar:'shell', solar:'beam', forge:'support', magma_cannon:'nova', ember:'support',
+    zero:'snow', lance:'spear', singularity:'ring', nova:'nova', icewall:'support', comet:'comet',
+    acid:'acid', spore:'drone', brood:'support', toxin:'wave', venom:'acid', mantis:'blade',
+    tesla:'coil', railgun:'rail', swarm:'drone', uplink:'support', pulse_laser:'grid', shieldpod:'support',
+    sovereign:'crown', singularity2:'spiral', annihilation:'cross', aegis:'support', voidlance:'spear', chrono:'support',
+    abyss_hunter:'claw', charge_prism:'battery', resonator:'support', reclaimer:'support', void_anchor:'anchor', swarm_queen:'crown'
+  };
+  function chassis(d, x, y, s){
+    const r = 20 * s, c = d.color || '#7fe8ff';
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    ctx.lineWidth = 1.1; ctx.strokeStyle = c; ctx.fillStyle = 'rgba(5,12,20,.72)';
+    const rr = d['dim'];
+    if (rr === 1){
+      for (const sd of [-1, 1]){ ctx.beginPath(); ctx.moveTo(sd*3,-13); ctx.lineTo(sd*24,-21); ctx.lineTo(sd*20,10); ctx.lineTo(sd*4,13); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+      ctx.beginPath(); ctx.arc(0,0,22,0,Math.PI*2); ctx.stroke();
+    } else if (rr === 2){
+      ctx.beginPath(); ctx.rect(-18,-15,36,30); ctx.fill(); ctx.stroke();
+      for (let i=-1;i<=1;i++){ ctx.beginPath(); ctx.moveTo(i*9,-18); ctx.lineTo(i*9,-26); ctx.stroke(); }
+      ctx.fillStyle='rgba(255,138,74,.35)'; ctx.beginPath(); ctx.arc(0,4,7,0,Math.PI*2); ctx.fill();
+    } else if (rr === 3){
+      for (let i=0;i<4;i++){ const a=i*Math.PI/2+Math.PI/4; ctx.save(); ctx.rotate(a); ctx.beginPath(); ctx.moveTo(-4,-17); ctx.lineTo(0,-29); ctx.lineTo(4,-17); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); }
+      ctx.beginPath(); ctx.arc(0,0,19,0,Math.PI*2); ctx.stroke();
+    } else if (rr === 4){
+      for (let i=0;i<3;i++){ const a=i*2.1-.5; ctx.beginPath(); ctx.ellipse(Math.cos(a)*16,Math.sin(a)*12,9,6,a,0,Math.PI*2); ctx.fill(); ctx.stroke(); }
+      ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.stroke();
+    } else if (rr === 5){
+      ctx.beginPath(); for (let i=0;i<8;i++){ const a=i*Math.PI/4; const rad=i%2?27:21; const xx=Math.cos(a)*rad, yy=Math.sin(a)*rad; i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy); } ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle='rgba(255,209,102,.28)'; ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*2); ctx.fill();
+    } else if (rr === 6){
+      for (let i=0;i<4;i++){ const a=i*Math.PI/2+Math.PI/4; ctx.save(); ctx.rotate(a); ctx.beginPath(); ctx.moveTo(-6,-20); ctx.lineTo(0,-31); ctx.lineTo(6,-20); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); }
+      ctx.beginPath(); ctx.arc(0,0,23,0,Math.PI*2); ctx.stroke();
+    } else {
+      for (let i=0;i<6;i++){ const a=i*Math.PI/3; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*24,Math.sin(a)*24); ctx.stroke(); }
+      ctx.beginPath(); ctx.arc(0,0,12,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function signature(d, x, y, s){
+    const k = SIG[d['key']], c = d.color || '#8fe8ff';
+    ctx.save(); ctx.translate(x, y - 22*s); ctx.scale(s, s);
+    ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = 1.2; ctx.globalAlpha = .9;
+    const line = (ax,ay,bx,by)=>{ ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); };
+    if (k === 'twin'){ line(-8,-8,-8,8); line(8,-8,8,8); line(-12,0,-8,0); line(8,0,12,0); }
+    else if (k === 'flame'){ ctx.beginPath(); ctx.moveTo(0,-13); ctx.quadraticCurveTo(10,0,0,9); ctx.quadraticCurveTo(-10,0,0,-13); ctx.stroke(); line(0,2,0,10); }
+    else if (k === 'shard'){ ctx.beginPath(); ctx.moveTo(0,-12); ctx.lineTo(8,8); ctx.lineTo(-8,8); ctx.closePath(); ctx.stroke(); line(0,-8,0,8); }
+    else if (k === 'arc'){ line(-10,8,-3,-2); line(-3,-2,3,4); line(3,4,10,-8); }
+    else if (k === 'fan'){ for(let i=-1;i<=1;i++) line(0,8,i*9,-12); line(-7,-15,7,-15); }
+    else if (k === 'shell'){ ctx.beginPath(); ctx.arc(0,0,8,0,Math.PI*2); ctx.stroke(); line(0,-11,0,-16); line(0,11,0,16); }
+    else if (k === 'sun'){ for(let i=0;i<8;i++){ const a=i*Math.PI/4; line(Math.cos(a)*4,Math.sin(a)*4,Math.cos(a)*12,Math.sin(a)*12);} ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.stroke(); }
+    else if (k === 'anvil'){ line(-10,-6,10,-6); line(-7,-6,-9,8); line(7,-6,9,8); line(-4,-10,4,-10); }
+    else if (k === 'beacon'){ line(0,-13,0,13); for(let i=0;i<3;i++) line(-9,-8+i*7,9,-8+i*7); }
+    else if (k === 'snow'){ for(let i=0;i<3;i++){ const a=i*Math.PI/3; line(Math.cos(a)*11,Math.sin(a)*11,-Math.cos(a)*11,-Math.sin(a)*11);} }
+    else if (k === 'spear'){ line(0,-16,0,14); line(-5,-7,0,-10); line(5,-7,0,-10); }
+    else if (k === 'ring'){ ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.stroke(); ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.stroke(); }
+    else if (k === 'star'){ for(let i=0;i<5;i++){ const a=-Math.PI/2+i*Math.PI*2/5; const b=a+Math.PI/5; line(Math.cos(a)*12,Math.sin(a)*12,Math.cos(b)*5,Math.sin(b)*5);} }
+    else if (k === 'wall'){ for(let i=-1;i<=1;i++) line(i*6,-11,i*6,11); line(-10,-5,10,-5); line(-10,5,10,5); }
+    else if (k === 'comet'){ ctx.beginPath(); ctx.arc(4,4,5,0,Math.PI*2); ctx.stroke(); line(-4,-4,-15,15); line(-1,-1,-12,18); }
+    else if (k === 'drop'){ ctx.beginPath(); ctx.moveTo(0,-12); ctx.quadraticCurveTo(8,0,0,9); ctx.quadraticCurveTo(-8,0,0,-12); ctx.stroke(); }
+    else if (k === 'pods'){ for(let i=0;i<3;i++){ ctx.beginPath(); ctx.arc((i-1)*7,(i%2?4:-3),3,0,Math.PI*2); ctx.stroke(); } }
+    else if (k === 'wave'){ for(let i=-1;i<=1;i++){ ctx.beginPath(); ctx.moveTo(-11,i*7); ctx.quadraticCurveTo(0,i*7-7,11,i*7); ctx.stroke(); } }
+    else if (k === 'drone'){ line(-9,-2,9,-2); for(let i=-1;i<=1;i++){ ctx.beginPath(); ctx.arc(i*8,-8,2.5,0,Math.PI*2); ctx.stroke(); } }
+    else if (k === 'blade'){ line(-11,-10,7,9); line(11,-10,-7,9); }
+    else if (k === 'coil'){ for(let i=0;i<3;i++){ ctx.beginPath(); ctx.arc(0,0,4+i*3,0,Math.PI*2); ctx.stroke(); } line(0,-12,0,12); }
+    else if (k === 'rail'){ line(-7,-14,-7,14); line(7,-14,7,14); for(let i=-2;i<=2;i++) line(-7,i*5,7,i*5); }
+    else if (k === 'dish'){ ctx.beginPath(); ctx.arc(0,3,10,Math.PI,0); ctx.stroke(); line(0,3,0,-10); line(-4,-3,4,-3); }
+    else if (k === 'grid'){ for(let i=-1;i<=1;i++) line(i*5,-10,i*5,10); for(let i=-1;i<=1;i++) line(-10,i*5,10,i*5); }
+    else if (k === 'shield'){ ctx.beginPath(); ctx.moveTo(0,-13); ctx.lineTo(10,-6); ctx.lineTo(7,8); ctx.lineTo(0,13); ctx.lineTo(-7,8); ctx.lineTo(-10,-6); ctx.closePath(); ctx.stroke(); }
+    else if (k === 'crown'){ line(-9,6,-9,-7); line(0,8,0,-11); line(9,6,9,-7); line(-9,-7,-4,-2); line(0,-11,4,-5); line(9,-7,4,-2); }
+    else if (k === 'spiral'){ for(let i=0;i<3;i++){ ctx.beginPath(); ctx.arc(0,0,3+i*3,0,Math.PI*1.5); ctx.stroke(); } }
+    else if (k === 'cross'){ line(-10,-10,10,10); line(10,-10,-10,10); line(0,-12,0,12); ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.stroke(); }
+    else if (k === 'clock'){ ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.stroke(); line(0,0,0,-6); line(0,0,5,3); }
+    else if (k === 'claw'){ for(let i=-1;i<=1;i++){ line(i*6,9,i*6-4,-9); line(i*6,-9,i*6+6,-3);} }
+    else if (k === 'battery'){ ctx.beginPath(); ctx.rect(-7,-11,14,22); ctx.stroke(); line(-4,-5,4,-5); line(-4,0,4,0); line(-4,5,4,5); }
+    else if (k === 'fork'){ line(0,10,0,-3); line(0,-3,-8,-13); line(0,-3,8,-13); ctx.beginPath(); ctx.arc(0,10,2,0,Math.PI*2); ctx.fill(); }
+    else if (k === 'magnet'){ ctx.beginPath(); ctx.arc(0,0,10,Math.PI,0); ctx.stroke(); line(-10,0,-10,10); line(10,0,10,10); }
+    else if (k === 'anchor'){ line(0,-12,0,10); ctx.beginPath(); ctx.arc(0,-8,4,0,Math.PI*2); ctx.stroke(); line(-8,8,8,8); line(-6,4,-8,8); line(6,4,8,8); }
+    ctx.restore();
+  }
+  const baseEmblem = drawTowerEmblem;
+  drawTowerEmblem = function(ti, cx, cy, s, aim, level){
+    const d = TOWERS[ti];
+    if (!d) return baseEmblem(ti, cx, cy, s, aim, level);
+    ctx.save(); chassis(d, cx, cy, s); ctx.restore();
+    baseEmblem(ti, cx, cy, s, aim, level);
+    ctx.save(); signature(d, cx, cy, s); ctx.restore();
+  };
+  function pair(t, target, c, w, life, off){
+    addBeam([{x:t.x+off,y:t.y-14},{x:target.x+off,y:target.y}], c, w, life);
+  }
+  function towerAttackFx(t, target, st){
+    if (!t || !target || !t.type) return;
+    const ty = t.type, k = ty['key'], kind = FX[k], c = ty.color || '#8fe8ff';
+    const mx=t.x, my=t.y-14, tx=target.x, tyy=target.y;
+    const dx=tx-mx, dy=tyy-my, len=Math.hypot(dx,dy)||1;
+    const mid={x:mx+dx*.55,y:my+dy*.55};
+    addBurst(mx,my,c,3,26);
+    if (kind === 'twin'){ pair(t,target,c,2,.14,-5); pair(t,target,c,1.2,.14,5); }
+    else if (kind === 'dash'){ pair(t,target,c,1,.1,0); pair(t,target,'#ffffff',2,.08,0); addRing(tx,tyy,3,20,c,.18,2); }
+    else if (kind === 'fan'){ for(let i=-1;i<=1;i++){ addBeam([{x:mx,y:my},{x:mid.x+i*34,y:mid.y+i*17},{x:tx+i*14,y:tyy}],c,1.4,.14);} }
+    else if (kind === 'cone'){ for(let i=-1;i<=1;i++){ addBeam([{x:mx,y:my},{x:mx+dx*.35+i*20,y:my+dy*.35+i*12},{x:tx+i*22,y:tyy+i*10}],c,i===0?3:1.5,.18);} addRing(tx,tyy,3,24,c,.18,2);}
+    else if (kind === 'shard'){ for(let i=-1;i<=1;i++){ const a=Math.atan2(dy,dx)+i*.12; addBeam([{x:mx,y:my},{x:mx+Math.cos(a)*len,y:my+Math.sin(a)*len}],c,1.4,.15);} addRing(tx,tyy,2,18,'#bff7ff',.2,2);}
+    else if (kind === 'arc'){ const pts=[{x:mx,y:my},{x:mid.x+10,y:mid.y-12},{x:mid.x-8,y:mid.y+9},{x:tx,y:tyy}]; addBeam(pts,'#bff7ff',2,.22); addBeam(pts,c,1,.22);}
+    else if (kind === 'shell'){ const pts=[]; for(let i=0;i<=6;i++){ const q=i/6; pts.push({x:mx+dx*q,y:my+dy*q-Math.sin(q*Math.PI)*55}); } addBeam(pts,c,4,.18); addRing(tx,tyy,4,30,c,.2,2);}
+    else if (kind === 'beam'){ pair(t,target,c,4,.14,0); pair(t,target,'#ffffff',1.2,.14,0); }
+    else if (kind === 'rail'){ pair(t,target,c,4,.12,0); pair(t,target,'#ffffff',1,.16,0); for(let i=-1;i<=1;i+=2) addBeam([{x:mx+i*7,y:my},{x:tx+i*3,y:tyy}],c,.8,.12); }
+    else if (kind === 'spear'){ pair(t,target,c,2,.2,0); pair(t,target,'#ffffff',1,.2,0); addRing(tx,tyy,2,14,'#d9d0ff',.15,2); }
+    else if (kind === 'ring' || kind === 'spiral'){ addRing(tx,tyy,5,34,c,.3,2); addRing(tx,tyy,8,48,'#d9d0ff',.35,1); addBeam([{x:mx,y:my},{x:tx,y:tyy}],c,1,.15); }
+    else if (kind === 'nova'){ addRing(t.x,t.y,10,st.range,c,.35,3); addRing(tx,tyy,4,28,'#ffffff',.2,2); }
+    else if (kind === 'comet'){ pair(t,target,'#bff7ff',5,.2,0); addRing(tx,tyy,4,36,'#b7f7ff',.24,2); addBurst(tx,tyy,'#ffffff',8,40); }
+    else if (kind === 'acid'){ const pts=[]; for(let i=0;i<=5;i++){ const q=i/5; pts.push({x:mx+dx*q,y:my+dy*q-Math.sin(q*Math.PI)*28}); } addBeam(pts,'#8bff52',2,.18); addRing(tx,tyy,3,20,'#8bff52',.2,2); }
+    else if (kind === 'wave'){ for(let i=-1;i<=1;i++){ const pts=[]; for(let q=0;q<=4;q++){ const z=q/4; pts.push({x:mx+dx*z,y:my+dy*z+Math.sin(z*Math.PI*3+i)*10});} addBeam(pts,c,2,.2);} }
+    else if (kind === 'drone'){ for(let i=-2;i<=2;i++){ const a=Math.atan2(dy,dx)+i*.07; addBeam([{x:mx,y:my},{x:mx+Math.cos(a)*len,y:my+Math.sin(a)*len}],c,1.2,.12);} }
+    else if (kind === 'blade'){ const nx=-dy/len,ny=dx/len; addBeam([{x:mx+nx*12,y:my+ny*12},{x:tx-nx*8,y:tyy-ny*8}],c,3,.16); addBeam([{x:mx-nx*12,y:my-ny*12},{x:tx+nx*8,y:tyy+ny*8}],'#ffffff',1,.16); }
+    else if (kind === 'crown'){ addBeam([{x:mx,y:my},{x:tx,y:tyy}],'#ffd166',5,.18); for(let i=-1;i<=1;i++) addBeam([{x:mx+i*12,y:my},{x:tx+i*14,y:tyy}],'#ffd166',1.2,.18); addRing(tx,tyy,4,30,'#ffd166',.28,2); }
+    else if (kind === 'cross'){ addBeam([{x:mx-18,y:my-18},{x:tx+18,y:tyy+18}],c,2,.2); addBeam([{x:mx+18,y:my-18},{x:tx-18,y:tyy+18}],c,2,.2); addBeam([{x:mx,y:my},{x:tx,y:tyy}],'#c58bff',4,.2); }
+    else if (kind === 'claw'){ for(let i=-1;i<=1;i++) addBeam([{x:mx+i*9,y:my},{x:tx+i*5,y:tyy}],c,3,.16); addRing(tx,tyy,3,22,'#ff7a5c',.18,2); }
+    else if (kind === 'anchor'){ addBeam([{x:mx,y:my},{x:tx,y:tyy}],c,2,.2); addRing(tx,tyy,6,38,c,.32,2); addRing(tx,tyy,2,24,'#ffffff',.15,1); }
+    else if (kind === 'coil'){ addRing(tx,tyy,3,30,c,.32,2); addRing(tx,tyy,6,46,'#ffffff',.22,1); addBeam([{x:mx,y:my},{x:tx,y:tyy}],c,1.2,.18); }
+    else if (kind === 'grid'){ for(let i=-1;i<=1;i++){ addBeam([{x:mx+i*14,y:my},{x:tx+i*10,y:tyy}],c,1.2,.18); } addRing(tx,tyy,4,26,c,.22,2); }
+    else if (kind === 'battery'){ addBeam([{x:mx,y:my},{x:tx,y:tyy}],c,6,.16); addBeam([{x:mx,y:my},{x:tx,y:tyy}],'#ffffff',1.5,.16); }
+    else if (kind === 'magnet' || kind === 'fork'){ addBeam([{x:mx,y:my},{x:tx,y:tyy}],c,1.5,.12); }
+    else { pair(t,target,c,2,.14,0); }
+    addBurst(tx,tyy,c,7,55);
+  }
+  const baseFire = fire;
+  fire = function(t, target){
+    try { const ty = t && t.type; if (t && target && ty && ty['arch'] !== 'support') towerAttackFx(t, target, towerStats(t)); } catch(e) {}
+    return baseFire(t, target);
+  };
+  window.__AG_TOWER_ID = { sig: SIG, fx: FX };
+})();
 </script>
 </body>
 </html>
