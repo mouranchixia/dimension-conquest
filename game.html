@@ -6957,23 +6957,6 @@ function drawTowerEmblem(ti, cx, cy, s, aim, level){
     ctx.stroke();
   }
 
-  /* swept stabilizer blades — the silhouette that reads at 28px */
-  for (let sy = -1; sy <= 1; sy += 2) {
-    ctx.beginPath();
-    ctx.moveTo(-5, sy * 8);
-    ctx.lineTo(-27, sy * 21);
-    ctx.lineTo(-24, sy * 25);
-    ctx.lineTo(-2, sy * 12);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(7,24,38,.94)';
-    ctx.fill();
-    ctx.strokeStyle = rgba(c, .82); ctx.lineWidth = 1; ctx.stroke();
-    ctx.strokeStyle = rgba('#dffcff', .42); ctx.lineWidth = .7;
-    ctx.beginPath(); ctx.moveTo(-22, sy * 19); ctx.lineTo(-7, sy * 10.5); ctx.stroke();
-    ctx.fillStyle = rgba('#eaffff', .9);
-    ctx.beginPath(); ctx.arc(-24.5, sy * 22.5, 1.2, 0, TAU); ctx.fill();
-  }
-
   /* dorsal fin + ventral sensor */
   ctx.beginPath(); ctx.moveTo(-3, -14); ctx.lineTo(4, -23); ctx.lineTo(1, -13); ctx.closePath();
   ctx.fillStyle = 'rgba(8,26,40,.95)'; ctx.fill();
