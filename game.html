@@ -209,7 +209,7 @@ const DIMENSIONS = [
     id: 1, roman: 'I', name: '近地轨道', short: '轨道', sub: 'TERRA ORBIT',
     tagline: '人类舰队的最后一道轨道防线。',
     color: '#5ad8ff', accent: '#bff4ff',
-    towers: ['pulse', 'flame', 'frost', 'storm'],
+    towers: ['pulse', 'flame', 'frost', 'storm', 'orbital', 'prism'],
     pool: ['scout', 'wisp', 'bulwark', 'repair'], boss: 'sentinel',
     startEnergy: 180,
     palette: {
@@ -223,7 +223,7 @@ const DIMENSIONS = [
     id: 2, roman: 'II', name: '熔火星域', short: '熔火', sub: 'IGNIS REACH',
     tagline: '恒星残骸中，熔火军团正在苏醒。',
     color: '#ff7a3a', accent: '#ffd166',
-    towers: ['melter', 'mortar', 'solar', 'forge'],
+    towers: ['melter', 'mortar', 'solar', 'forge', 'magma_cannon', 'ember'],
     pool: ['cinder', 'magma', 'ashwing', 'pyro'], boss: 'inferno',
     startEnergy: 220,
     palette: {
@@ -237,7 +237,7 @@ const DIMENSIONS = [
     id: 3, roman: 'III', name: '霜寂星云', short: '霜寂', sub: 'CRYO NEBULA',
     tagline: '绝对零度之下，时间也会冻结。',
     color: '#8ff0ff', accent: '#d8f4ff',
-    towers: ['zero', 'lance', 'singularity', 'nova'],
+    towers: ['zero', 'lance', 'singularity', 'nova', 'icewall', 'comet'],
     pool: ['frostling', 'wraith', 'golem', 'shard'], boss: 'zero',
     startEnergy: 270,
     palette: {
@@ -251,7 +251,7 @@ const DIMENSIONS = [
     id: 4, roman: 'IV', name: '生体星群', short: '生体', sub: 'HIVE CLUSTER',
     tagline: '星群本身，就是一头饥饿的巨兽。',
     color: '#b6ff6a', accent: '#7ee6c0',
-    towers: ['acid', 'spore', 'brood', 'toxin'],
+    towers: ['acid', 'spore', 'brood', 'toxin', 'venom', 'mantis'],
     pool: ['larva', 'spitter', 'brood', 'titan'], boss: 'queen',
     startEnergy: 320,
     palette: {
@@ -265,7 +265,7 @@ const DIMENSIONS = [
     id: 5, roman: 'V', name: '赛博星环', short: '赛博', sub: 'MACHINE RING',
     tagline: '整座星环，是一台没有心跳的战争机器。',
     color: '#4fffd0', accent: '#a8fff0',
-    towers: ['tesla', 'railgun', 'swarm', 'uplink'],
+    towers: ['tesla', 'railgun', 'swarm', 'uplink', 'pulse_laser', 'shieldpod'],
     pool: ['sentry', 'raider', 'colossus', 'nexus'], boss: 'overmind',
     startEnergy: 380,
     palette: {
@@ -279,7 +279,7 @@ const DIMENSIONS = [
     id: 6, roman: 'VI', name: '统御之庭', short: '终焉', sub: 'SOVEREIGN COURT',
     tagline: '前五个维度的征服者，在此刻合而为一。',
     color: '#ffd166', accent: '#fff0c0',
-    towers: ['sovereign', 'singularity2', 'annihilation', 'aegis'],
+    towers: ['sovereign', 'singularity2', 'annihilation', 'aegis', 'voidlance', 'chrono'],
     pool: ['echo', 'tyrant', 'devourer', 'weaver', 'apex'], boss: 'sovereign',
     startEnergy: 450,
     palette: {
@@ -382,7 +382,55 @@ const TOWERS = [
     branches: [B('湮灭', '伤害 +50%，贯穿 +2', { dmg: .5, pierce: 2 }), B('熵增', '灼烧 +100%，射程 +10%', { burn: 1.0, range: .1 })] },
   { key: 'aegis', name: '终焉方舟', tag: '方舟', dim: 6, arch: 'support', cost: 130, dmg: 0, rate: 0, range: 195,
     color: '#ffd166', dmgType: 'void', auraDmg: .20, auraRate: .18, desc: '统御之庭的方舟，为全军提供终焉增幅。',
-    branches: [B('方舟护盾', '友军伤害 +15%', { auraDmg: .15 }), B('终焉引擎', '友军攻速 +15%', { auraRate: .15 })] }
+    branches: [B('方舟护盾', '友军伤害 +15%', { auraDmg: .15 }), B('终焉引擎', '友军攻速 +15%', { auraRate: .15 })] },
+
+  /* I · 扩充 */
+  { key: 'orbital', name: '轨道速射', tag: '速射', dim: 1, arch: 'pulse', cost: 45, dmg: 7, rate: 2.8, range: 145,
+    color: '#76e6ff', dmgType: 'energy', family: 'kinetic', desc: '低单发高射速的近防炮，专门清扫虫群。',
+    branches: [B('速射转轮', '攻速 +35%', { rate: .35 }), B('钨芯弹', '伤害 +35%，贯穿 +1', { dmg: .35, pierce: 1 })] },
+  { key: 'prism', name: '棱镜折射', tag: '折射', dim: 1, arch: 'beam', cost: 95, dmg: 13, rate: 1.8, range: 168, pierce: 1,
+    color: '#9ad8ff', dmgType: 'energy', family: 'volt', desc: '折射光束在多个目标间跳跃。',
+    branches: [B('多棱镜', '贯穿 +1', { pierce: 1 }), B('聚焦棱镜', '伤害 +45%', { dmg: .45 })] },
+
+  /* II · 扩充 */
+  { key: 'magma_cannon', name: '熔核榴弹', tag: '重爆', dim: 2, arch: 'mortar', cost: 80, dmg: 26, rate: .75, range: 170, splash: 82,
+    color: '#ff9a5a', dmgType: 'fire', family: 'thermal', desc: '抛射熔核，落点留下短促火海。',
+    branches: [B('双联装填', '一次抛射 2 发', { multi: 2 }), B('熔核深潜', '伤害 +45%', { dmg: .45 })] },
+  { key: 'ember', name: '余烬信标', tag: '增幅', dim: 2, arch: 'support', cost: 85, dmg: 0, rate: 0, range: 150,
+    color: '#ffb06a', dmgType: 'fire', family: 'thermal', auraDmg: .14, auraRate: .08, desc: '余烬信标点燃友军火力。',
+    branches: [B('不灭余烬', '友军伤害 +12%', { auraDmg: .12 }), B('热浪', '友军攻速 +12%', { auraRate: .12 })] },
+
+  /* III · 扩充 */
+  { key: 'icewall', name: '永冻壁垒', tag: '增幅', dim: 3, arch: 'support', cost: 70, dmg: 0, rate: 0, range: 135,
+    color: '#a8f0ff', dmgType: 'frost', family: 'cryo', auraDmg: .07, auraRate: .18, desc: '寒潮壁垒，提升友军射速。',
+    branches: [B('冰河网络', '友军攻速 +12%', { auraRate: .12 }), B('霜核', '友军伤害 +10%', { auraDmg: .10 })] },
+  { key: 'comet', name: '冰彗坠落', tag: '新星', dim: 3, arch: 'nova', cost: 115, dmg: 32, rate: .7, range: 180, splash: 95,
+    color: '#c8f4ff', dmgType: 'frost', family: 'cryo', desc: '召来冰彗，砸出大范围霜爆。',
+    branches: [B('彗尾', '范围 +50%', { splash: .5 }), B('冰核', '伤害 +45%', { dmg: .45 })] },
+
+  /* IV · 扩充 */
+  { key: 'venom', name: '毒刺无人机', tag: '蜂群', dim: 4, arch: 'drone', cost: 75, dmg: 10, rate: 2.0, range: 150, multi: 1,
+    color: '#b6ff6a', dmgType: 'bio', family: 'thermal', desc: '毒刺无人机持续注入神经毒素。',
+    branches: [B('毒群', '同时攻击 +1', { multi: 1 }), B('神经毒', '剧毒 +60%', { poison: .6 })] },
+  { key: 'mantis', name: '镰刃猎手', tag: '狙击', dim: 4, arch: 'rail', cost: 100, dmg: 30, rate: 1.0, range: 165, pierce: 2,
+    color: '#d7ff8a', dmgType: 'bio', family: 'kinetic', desc: '镰刃弹射，贯穿甲壳。',
+    branches: [B('双镰', '贯穿 +1', { pierce: 1 }), B('猎杀本能', '伤害 +40%', { dmg: .4 })] },
+
+  /* V · 扩充 */
+  { key: 'pulse_laser', name: '脉冲激光', tag: '穿透', dim: 5, arch: 'beam', cost: 110, dmg: 18, rate: 1.8, range: 180, pierce: 1,
+    color: '#7fffe0', dmgType: 'energy', family: 'volt', desc: '高频脉冲激光切开装甲。',
+    branches: [B('超频脉冲', '攻速 +30%', { rate: .3 }), B('聚焦脉冲', '伤害 +40%', { dmg: .4 })] },
+  { key: 'shieldpod', name: '护盾舱', tag: '指挥', dim: 5, arch: 'support', cost: 90, dmg: 0, rate: 0, range: 160,
+    color: '#8fffe8', dmgType: 'energy', family: 'volt', auraDmg: .08, auraRate: .16, desc: '护盾舱为友军提供稳定射击环境。',
+    branches: [B('护盾链', '友军攻速 +10%', { auraRate: .10 }), B('相位校准', '友军伤害 +10%', { auraDmg: .10 })] },
+
+  /* VI · 扩充 */
+  { key: 'voidlance', name: '虚空长矛', tag: '贯穿', dim: 6, arch: 'rail', cost: 150, dmg: 50, rate: .65, range: 220, pierce: 2,
+    color: '#ffe0a0', dmgType: 'void', family: 'volt', desc: '虚空长矛贯穿整条防线。',
+    branches: [B('维度贯穿', '贯穿 +2', { pierce: 2 }), B('虚空爆裂', '伤害 +45%，溅射 +30%', { dmg: .45, splash: .3 })] },
+  { key: 'chrono', name: '时轮枢纽', tag: '时控', dim: 6, arch: 'support', cost: 120, dmg: 0, rate: 0, range: 180,
+    color: '#ffd166', dmgType: 'void', family: 'cryo', auraDmg: .12, auraRate: .15, desc: '时轮枢纽加速友军，延缓来敌。',
+    branches: [B('时滞场', '友军攻速 +12%', { auraRate: .12 }), B('时轮脉冲', '友军伤害 +12%', { auraDmg: .12 })] }
 ];
 const TOWER_MAP = Object.fromEntries(TOWERS.map(t => [t.key, t]));
 function towerIndex(key){ return TOWERS.findIndex(t => t.key === key); }
@@ -2006,9 +2054,9 @@ function towerStats(t){
   const sup = supportBonus(t);
   const mul = (1 + 0.33 * (lv - 1));
   return {
-    dmg: d.dmg * mul * (1 + g.mods.dmg) * (1 + (b.dmg || 0)) * (1 + sup.dmg),
-    rate: d.rate * (1 + 0.065 * (lv - 1)) * (1 + g.mods.rate) * (1 + (b.rate || 0)) * (1 + sup.rate),
-    range: (d.range + (lv - 1) * 4) * (1 + g.mods.range) * (1 + (b.range || 0)),
+    dmg: d.dmg * 0.85 * mul * (1 + g.mods.dmg) * (1 + (b.dmg || 0)) * (1 + sup.dmg),
+    rate: d.rate * 0.94 * (1 + 0.065 * (lv - 1)) * (1 + g.mods.rate) * (1 + (b.rate || 0)) * (1 + sup.rate),
+    range: (d.range + (lv - 1) * 4) * 0.98 * (1 + g.mods.range) * (1 + (b.range || 0)),
     splash: (d.splash || 0) * (1 + (b.splash || 0)),
     slow: clamp((d.slow || 0) + (b.slow || 0), 0, 0.85),
     slowDur: (d.slowDur || 0) + (b.slowDur || 0),
@@ -4550,7 +4598,7 @@ DIMENSIONS.forEach(d => d.towers.forEach(k => TOWER_ORDER.push(k)));
 const DEFAULT_UNLOCK = dimOf(1).towers.slice(0, 4);
 
 function defaultProgress(){
-  return { unlocked: DEFAULT_UNLOCK.slice(), cleared: {}, best: bestScore || 0, challengeUnlocked: false };
+  return { unlocked: DEFAULT_UNLOCK.slice(), cleared: {}, best: bestScore || 0, challengeUnlocked: false, seen: [] };
 }
 function loadProgress(){
   let raw = null;
@@ -4568,6 +4616,7 @@ function loadProgress(){
     }
     p.best = Math.max(p.best, Number(raw.best) || 0);
     p.challengeUnlocked = !!raw.challengeUnlocked;
+    if (Array.isArray(raw.seen)) p.seen = raw.seen.slice();
   }
   if (!p.unlocked.length) p.unlocked = DEFAULT_UNLOCK.slice();
   p.challengeUnlocked = p.challengeUnlocked || campaignClearCount(p) >= 3;
@@ -4581,7 +4630,8 @@ function saveProgress(){
       unlocked: PROGRESS.unlocked.slice(),
       cleared: Object.assign({}, PROGRESS.cleared),
       best: PROGRESS.best,
-      challengeUnlocked: !!PROGRESS.challengeUnlocked
+      challengeUnlocked: !!PROGRESS.challengeUnlocked,
+      seen: (PROGRESS.seen || []).slice()
     });
     store.set((typeof window !== 'undefined' && window.__PUBLIC_BUILD) ? 'abyss_best_public_v2' : 'abyss_best_v2', bestScore);
   } catch (e) {}
@@ -4888,10 +4938,15 @@ function stageClear(){
   const first = !prev;
   PROGRESS.cleared[info.key] = Math.max(prev, stars);
   PROGRESS.best = Math.max(PROGRESS.best || 0, g.score || 0);
-  let unlockedKey = null;
+  let unlockedKey = null, unlockedKeys = [];
   if (first) {
-    for (const k of TOWER_ORDER) {
-      if (PROGRESS.unlocked.indexOf(k) < 0) { PROGRESS.unlocked.push(k); unlockedKey = k; break; }
+    if (typeof nextTowerUnlocks === 'function') {
+      unlockedKeys = nextTowerUnlocks(4);
+      for (const k of unlockedKeys) { if (unlockTowerKey(k) && !unlockedKey) unlockedKey = k; }
+    } else {
+      for (const k of TOWER_ORDER) {
+        if (PROGRESS.unlocked.indexOf(k) < 0) { PROGRESS.unlocked.push(k); unlockedKey = k; unlockedKeys = [k]; break; }
+      }
     }
   }
   if (!info.challenge && campaignClearCount() >= 3) PROGRESS.challengeUnlocked = true;
@@ -4899,7 +4954,7 @@ function stageClear(){
   g.best = Math.max(g.best || 0, PROGRESS.best);
   g.clearInfo = {
     info, stars, first: first,
-    unlockedKey,
+    unlockedKey, unlockedKeys,
     nextStage: nextStageInfo(info),
     campaignClears: campaignClearCount(),
     challengeClears: challengeClearCount(),
@@ -5955,7 +6010,7 @@ function skMenu(){
   skText('ASTRAL NAVIGATOR · SIX REALMS', 114, 188, 7, SK.gold, 'left', 400, true, 2.4);
   skText('六个章节 · 十八个小关 · 每小关六波', 114, 232, 11, SK.paperDim, 'left', 400, false, .8);
   const cc = campaignClearCount(), total = CAMPAIGN.chapters * CAMPAIGN.stagesPerChapter;
-  skText('已征服 ' + cc + ' / ' + total + '   ·   已解锁炮塔 ' + PROGRESS.unlocked.length + ' / 24   ·   历史最佳 ' + fmt(PROGRESS.best), 114, 254, 8, SK.paperFaint, 'left', 400, true, .5);
+  skText('已征服 ' + cc + ' / ' + total + '   ·   已解锁炮塔 ' + PROGRESS.unlocked.length + ' / ' + TOWERS.length + '   ·   历史最佳 ' + fmt(PROGRESS.best), 114, 254, 8, SK.paperFaint, 'left', 400, true, .5);
 
   const mw = skLink('skin_menu_start', '进入星图', 108, 320, 21, SK.paper, () => openChapters(), '选择章节与小关 · 每关重新配装');
   skText('ENTER THE ATLAS', 108 + mw / 2, 350, 6.5, SK.goldDim, 'center', 400, true, 2);
@@ -6163,7 +6218,7 @@ function skStages(){
     addHot('skin_stage_' + s, x - 82, y - 74, 164, 164, act, unlocked ? info.name : '未解锁 · 先通关上一小关');
   }
   skLink('skin_back_chapters', '返回星图', 70, 558, 10.5, SK.paperDim, () => openChapters(), '返回章节选择');
-  skText('炮塔解锁 ' + PROGRESS.unlocked.length + ' / 24', 886, 558, 8, SK.paperDim, 'right', 400, true, .8);
+  skText('炮塔解锁 ' + PROGRESS.unlocked.length + ' / ' + TOWERS.length, 886, 558, 8, SK.paperDim, 'right', 400, true, .8);
 }
 
 /* ---------- loadout ---------- */
@@ -6174,18 +6229,21 @@ function skLoadout(){
   fullBlock(0);
   skBorder();
   skText('战 前 配 置', 480, 43, 26, SK.paper, 'center', 500, false, 6);
-  skText('从 24 座炮塔中选取 4 座 · 不绑定维度 · 下一关重新选择', 480, 65, 8.5, SK.paperDim, 'center', 400, true, .6);
-  skText((g.challenge ? 'TRIAL ' + ['I','II','III'][g.stage - 1] : 'CHAPTER ' + d.roman + ' · STAGE ' + g.stage) + '   ·   SELECTED ' + g.loadout.length + ' / 4   ·   UNLOCKED ' + PROGRESS.unlocked.length + ' / 24', 480, 82, 7.5, d.color, 'center', 400, true, 1.1);
-  skLine(72, 92, 888, 92, SK.goldDim, 1);
+  skText('从 ' + TOWERS.length + ' 座炮塔中选取 4 座 · 每章 6 座 · 下一关重新选择', 480, 65, 8.5, SK.paperDim, 'center', 400, true, .6);
+  skText((g.challenge ? 'TRIAL ' + ['I','II','III'][g.stage - 1] : 'CHAPTER ' + d.roman + ' · STAGE ' + g.stage) + '   ·   SELECTED ' + g.loadout.length + ' / 4   ·   UNLOCKED ' + PROGRESS.unlocked.length + ' / ' + TOWERS.length, 480, 82, 7.5, d.color, 'center', 400, true, 1.1);
+  skLine(56, 92, 904, 92, SK.goldDim, 1);
 
-  const cw = 196, chh = 58, gapX = 8, x0 = 86, y0 = 104, gapY = 6;
+  const cw = 144, chh = 56, gapX = 4, x0 = 68, y0 = 104, gapY = 6;
   for (let row = 0; row < 6; row++) {
     const dd = dimOf(row + 1);
     const y = y0 + row * (chh + gapY);
-    skText(dd.roman, 34, y + 22, 13, dd.color, 'center', 400, true);
-    skText(dd.short, 34, y + 39, 7.5, rgba(dd.color, .85), 'center', 400);
-    for (let col = 0; col < 4; col++) {
-      const ti = row * 4 + col, def = TOWERS[ti];
+    skText(dd.roman, 24, y + 22, 13, dd.color, 'center', 400, true);
+    skText(dd.short, 24, y + 39, 6.8, rgba(dd.color, .85), 'center', 400);
+    const rowKeys = dimOf(row + 1).towers;
+    for (let col = 0; col < 6; col++) {
+      const defKey = rowKeys[col];
+      const ti = defKey == null ? -1 : TOWER_INDEX[defKey];
+      const def = ti == null || ti < 0 ? null : TOWERS[ti];
       if (!def) continue;
       const x = x0 + col * (cw + gapX);
       const sel = g.loadout.indexOf(ti) >= 0;
@@ -6207,18 +6265,18 @@ function skLoadout(){
       }
       ctx.restore();
       ctx.save(); if (!unlocked) ctx.globalAlpha = .5;
-      drawTowerEmblem(ti, x + 27, y + chh / 2, .9, -.4);
+      drawTowerEmblem(ti, x + 24, y + chh / 2, .82, -.4);
       ctx.restore();
-      skText(def.name, x + 62, y + 18, 10.5, sel ? SK.paper : unlocked ? '#e0d4bd' : '#b3a994', 'left', 400, false, .5);
-      skText(def.tag, x + 62, y + 33, 8, unlocked ? rgba(def.color, .95) : '#9a9282', 'left', 400);
+      skText(def.name, x + 52, y + 18, 9.5, sel ? SK.paper : unlocked ? '#e0d4bd' : '#b3a994', 'left', 400, false, .5);
+      skText(def.tag, x + 52, y + 32, 7.5, unlocked ? rgba(def.color, .95) : '#9a9282', 'left', 400);
       if (unlocked) {
-        skText(Math.round(buildCost(ti)) + ' ⚡', x + 62, y + 47, 8, SK.goldDim, 'left', 400, true, .4);
-        if (rec) skStar(x + cw - 14, y + 14, 3.8, dd.color, .2);
+        skText(Math.round(buildCost(ti)) + ' ⚡', x + 52, y + 46, 7.5, SK.goldDim, 'left', 400, true, .4);
+        if (rec) skStar(x + cw - 12, y + 13, 3.4, dd.color, .2);
       } else {
-        skText('未解锁', x + 50, y + 47, 8, '#8a8375', 'left', 400);
+        skText('未解锁', x + 48, y + 46, 7.5, '#8a8375', 'left', 400);
       }
-      if (sel) skText('✓', x + cw - 14, y + chh - 13, 8, SK.gold, 'center', 400, true);
-      else if (unlocked) skText('＋', x + cw - 14, y + chh - 13, 9, hot ? SK.paper : SK.goldDim, 'center', 600, true);
+      if (sel) skText('✓', x + cw - 12, y + chh - 12, 8, SK.gold, 'center', 400, true);
+      else if (unlocked) skText('＋', x + cw - 12, y + chh - 12, 8, hot ? SK.paper : SK.goldDim, 'center', 600, true);
       addHot('skin_load_' + ti, x, y, cw, chh, () => toggleLoadout(ti),
         unlocked ? def.name + ' · ' + def.tag + '\n' + def.desc + '\n造价 ' + Math.round(buildCost(ti)) + ' ⚡' : def.name + ' · 未解锁\n首通关卡以解锁', !unlocked);
     }
@@ -6294,9 +6352,10 @@ function skStageClear(){
     const ti = TOWER_INDEX[ci.unlockedKey], def = TOWERS[ti];
     skFrame(210, 314, 540, 56, 6, SK.goldFaint, 'rgba(20,17,12,.75)');
     ctx.save(); drawTowerEmblem(ti, 238, 342, .82, -.4); ctx.restore();
-    skText('NEW INSTRUMENT', 266, 330, 6.5, SK.green, 'left', 400, true, 1.6);
-    skText(def.name + ' · ' + def.tag, 266, 350, 12, SK.paper, 'left', 400, false, .8);
-    const dl = skWrap(def.desc || '', 230, 8.2);
+    const nUnlock = ci.unlockedKeys ? ci.unlockedKeys.length : 1;
+    skText(nUnlock > 1 ? 'SYNC UNLOCK ×' + nUnlock : 'NEW INSTRUMENT', 266, 330, 6.5, SK.green, 'left', 400, true, 1.6);
+    skText(def.name + ' · ' + def.tag + (nUnlock > 1 ? '  + ' + (nUnlock - 1) + ' 座' : ''), 266, 350, 12, SK.paper, 'left', 400, false, .8);
+    const dl = skWrap(nUnlock > 1 ? '四系同步解锁 · 新的防线选择已就绪。' : (def.desc || ''), 230, 8.2);
     for (let j = 0; j < Math.min(2, dl.length); j++) skText(dl[j], 460, 336 + j * 13, 8.2, SK.paperDim, 'left', 400);
   } else {
     skText(ci.nextStage ? '下一小关已解锁 · 进入后重新选择炮塔' : '本章小关已全部通关', 480, 342, 9, SK.paperDim, 'center', 400, true, .5);
@@ -9560,6 +9619,273 @@ drawBossBody = function(e, r){
     for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(r * .3, r * .18 + i * r * .04); ctx.lineTo(r * .75, r * .18 + i * r * .04); ctx.stroke(); }
   }
 };
+/* ============================================================
+   16_codex.js · 怪物情报 / 总图鉴 / 四系同步解锁
+   ============================================================ */
+const CODEX_ADMIN = () => (typeof adminOn === 'function' && adminOn());
+
+/* ---- 四系与解锁：每关首通从四个 family 各取一座 ---- */
+function towerFamily(def){
+  if (!def) return 'kinetic';
+  if (def.family) return def.family;
+  const a = def.arch, t = def.dmgType;
+  if (a === 'pulse' || a === 'mortar' || a === 'rail' || a === 'drone') return 'kinetic';
+  if (a === 'flame' || a === 'acid') return 'thermal';
+  if (a === 'frost' || a === 'nova' || a === 'gravity') return 'cryo';
+  if (a === 'support' || a === 'beam' || a === 'hybrid') {
+    if (t === 'fire' || t === 'bio') return 'thermal';
+    if (t === 'frost' || t === 'gravity') return 'cryo';
+    return 'volt';
+  }
+  return 'kinetic';
+}
+function nextTowerUnlocks(n){
+  n = n || 4;
+  const fams = ['kinetic', 'thermal', 'cryo', 'volt'];
+  const out = [];
+  for (const fam of fams) {
+    for (const k of TOWER_ORDER) {
+      const ti = TOWER_INDEX[k];
+      if (ti == null || isTowerUnlocked(ti)) continue;
+      const def = TOWERS[ti];
+      if (towerFamily(def) !== fam) continue;
+      out.push(k);
+      break;
+    }
+  }
+  return out.slice(0, n);
+}
+
+/* ---- 图鉴数据 ---- */
+function codexSeen(){
+  if (!Array.isArray(PROGRESS.seen)) PROGRESS.seen = [];
+  return PROGRESS.seen;
+}
+function codexDimOf(key){
+  for (const d of DIMENSIONS) {
+    if (d.boss === key || (d.pool || []).indexOf(key) >= 0) return d;
+  }
+  return DIMENSIONS[0];
+}
+function codexType(key){
+  return Object.assign({}, ENEMY_TYPES[key] || {}, ENEMY_TRAITS[key] || {});
+}
+function codexTraits(key){
+  const t = codexType(key);
+  const a = [];
+  if (t.armor) a.push('护甲 ' + Math.round(t.armor * 100) + '%');
+  if (t.resist) a.push('全抗 ' + Math.round(t.resist * 100) + '%');
+  if (t.ward) {
+    const names = [];
+    for (const k of Object.keys(t.ward)) names.push(DMG_INFO[k] ? DMG_INFO[k].name : k);
+    if (names.length) a.push('抗性 ' + names.join('/'));
+  }
+  if (t.shield) a.push('护盾 ' + t.shield);
+  if (t.regen) a.push('再生 ' + Math.round(t.regen * 1000) / 10 + '%/s');
+  if (t.phase) a.push('相位');
+  if (t.split) a.push('分裂 ×' + t.split);
+  if (t.summon) a.push('召唤');
+  if (t.heal) a.push('治疗');
+  if (t.boom) a.push('自爆');
+  if (t.siege) a.push('压制');
+  if (t.disrupt) a.push('干扰');
+  if (t.enrage) a.push('狂暴');
+  if (t.leech) a.push('汲取');
+  if (t.boss) a.push('首领');
+  return a.length ? a : ['无特殊抗性'];
+}
+function codexWeak(key){
+  const t = codexType(key);
+  if (t.ward) {
+    const out = [];
+    for (const k of Object.keys(DMG_INFO)) {
+      if (!(k in t.ward)) out.push(DMG_INFO[k].name);
+      if (out.length >= 2) break;
+    }
+    if (out.length) return '弱点 · ' + out.join(' / ');
+  }
+  if (t.phase) return '对策 · 减速 / 范围覆盖';
+  if (t.armor) return '对策 · 穿甲 / 爆破';
+  if (t.shield || t.regen) return '对策 · 爆发 / 剧毒';
+  if (t.summon || t.heal) return '对策 · 优先点杀 / 范围';
+  return '对策 · 集火与减速';
+}
+
+/* ---- 新怪简报（每关开始前） ---- */
+function codexStageNewKeys(){
+  const g = game;
+  const seen = codexSeen();
+  const out = [], add = k => { if (k && out.indexOf(k) < 0 && seen.indexOf(k) < 0) out.push(k); };
+  for (let w = 1; w <= CAMPAIGN.wavesPerStage; w++) {
+    const plan = planWave(g.dimension, w);
+    for (const it of plan.list) add(it.key);
+  }
+  return out;
+}
+function codexBriefing(){
+  const g = game;
+  if (!g || g.state !== 'build') return false;
+  const keys = codexStageNewKeys();
+  if (!keys.length) return false;
+  const seen = codexSeen();
+  for (const k of keys) if (seen.indexOf(k) < 0) seen.push(k);
+  saveProgress();
+  g.codexQueue = keys;
+  g.codexPage = 0;
+  g.codexReturn = 'build';
+  g.state = 'briefing';
+  return true;
+}
+function codexNext(){
+  const g = game;
+  if (!g || g.state !== 'briefing') return false;
+  if (g.codexPage < g.codexQueue.length - 1) { g.codexPage++; sfx('select'); return true; }
+  g.state = 'build';
+  setBanner('敌情确认', '按你的配置开始防守', '#8fe8ff', 1.8);
+  sfx('click');
+  return true;
+}
+function codexSkip(){
+  const g = game;
+  if (!g || g.state !== 'briefing') return false;
+  g.state = 'build';
+  sfx('click');
+  return true;
+}
+function openBestiary(){
+  const g = game;
+  if (!g) return false;
+  g.codexReturn = g.state;
+  g.state = 'codex';
+  return true;
+}
+function closeBestiary(){
+  const g = game;
+  if (!g || g.state !== 'codex') return false;
+  g.state = g.codexReturn || 'chapters';
+  return true;
+}
+
+/* ---- 绘制：新怪简报 ---- */
+function drawBriefing(){
+  const g = game;
+  if (!g.codexQueue || !g.codexQueue.length) { g.state = 'build'; return; }
+  const key = g.codexQueue[g.codexPage];
+  const d = codexDimOf(key);
+  const t = codexType(key);
+  skFrame(180, 64, 600, 468, 12, SK.goldDim, 'rgba(4,8,14,.97)');
+  skCorner(192, 76, 576, 444, 8, SK.goldFaint);
+  skText('新 敌 情', 480, 106, 24, SK.paper, 'center', 500, false, 5);
+  skText('NEW HOSTILE · ' + d.name + ' · ' + (g.codexPage + 1) + ' / ' + g.codexQueue.length, 480, 126, 7.5, d.color, 'center', 400, true, 1);
+  skLine(220, 142, 740, 142, SK.goldDim, 1);
+
+  ctx.save();
+  ctx.strokeStyle = rgba(d.color, .5);
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(320, 300, 54, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(320, 300, 48, 0, TAU); ctx.stroke();
+  ctx.restore();
+  skText('SPECIMEN FILE', 320, 238, 6.5, rgba(d.color, .8), 'center', 400, true, 1.2);
+  const e = makeEnemy(key, g.dimension, 6, false, {});
+  e.x = 320; e.y = 300; e.boss = false;
+  e.r = 34; e.hp = e.maxHp; e.speed = 0;
+  drawEnemy(e);
+  skText(t.name || key, 500, 178, 21, SK.paper, 'left', 500, false, 2);
+  skText(t.desc || '', 500, 201, 9, SK.paperDim, 'left', 400);
+  skText('特性', 500, 232, 8, SK.goldDim, 'left', 600, true, 1.5);
+  const traits = codexTraits(key);
+  for (let i = 0; i < Math.min(3, traits.length); i++) skText('· ' + traits[i], 500, 249 + i * 17, 9, SK.paper, 'left', 400);
+  skText('弱点 / 对策', 500, 300, 8, SK.goldDim, 'left', 600, true, 1.5);
+  skText(codexWeak(key), 500, 318, 9, SK.green, 'left', 400);
+  skText('首次发现已记录至总图鉴', 500, 345, 7.5, SK.paperFaint, 'left', 400, true);
+  skLink('codex_next', g.codexPage < g.codexQueue.length - 1 ? '下一只' : '开始防守', 480, 475, 13, SK.gold, () => codexNext(), '确认敌情后开始', 'center');
+  skLink('codex_skip', '跳过介绍', 480, 505, 8.5, SK.paperDim, () => codexSkip(), '直接开始本关', 'center');
+}
+
+/* ---- 绘制：总图鉴 ---- */
+function drawCodex(){
+  const g = game;
+  const seen = codexSeen();
+  const admin = CODEX_ADMIN();
+  skFrame(40, 44, 880, 516, 12, SK.goldDim, 'rgba(4,8,14,.97)');
+  skCorner(52, 56, 856, 492, 8, SK.goldFaint);
+  skText('怪 物 图 鉴', 480, 82, 26, SK.paper, 'center', 500, false, 6);
+  skText('BESTIARY · 已记录 ' + seen.length + ' / ' + ENEMY_ORDER.length + ' 种 · 每一维度的敌群各不相同', 480, 102, 7.5, SK.paperDim, 'center', 400, true, .8);
+  skLine(74, 112, 886, 112, SK.goldDim, 1);
+
+  const cw = 136, ch = 64, gap = 5, x0 = 58, y0 = 124, stepY = 69;
+  for (let i = 0; i < ENEMY_ORDER.length; i++) {
+    const key = ENEMY_ORDER[i];
+    const d = codexDimOf(key);
+    const known = admin || seen.indexOf(key) >= 0;
+    const col = i % 6, row = Math.floor(i / 6);
+    const x = x0 + col * (cw + gap), y = y0 + row * stepY;
+    const hot = g.hoverHot && g.hoverHot.id === 'codex_card_' + i;
+    ctx.save();
+    ctx.fillStyle = known ? (hot ? 'rgba(12,28,40,.98)' : 'rgba(7,14,22,.95)') : 'rgba(5,8,13,.82)';
+    ctx.fillRect(x, y, cw, ch);
+    ctx.strokeStyle = known ? (hot ? SK.gold : rgba(d.color, .45)) : 'rgba(90,100,110,.18)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + .5, y + .5, cw - 1, ch - 1);
+    ctx.restore();
+    if (known) {
+      const e = makeEnemy(key, d.dim || 1, 1, false, {});
+      e.x = x + 22; e.y = y + 33; e.boss = false;
+      e.r = Math.min(13, e.r); e.hp = e.maxHp; e.speed = 0;
+      drawEnemy(e);
+      skText(codexType(key).name || key, x + 46, y + 17, 8.5, SK.paper, 'left', 500);
+      skText(d.short + ' · ' + d.roman, x + 46, y + 31, 6.8, rgba(d.color, .9), 'left', 400);
+      const tr = codexTraits(key).slice(0, 2).join(' · ');
+      skText(tr, x + 46, y + 45, 6.4, SK.paperDim, 'left', 400);
+      skText(codexWeak(key).replace('弱点 · ', '弱 ').replace('对策 · ', ''), x + 46, y + 57, 6.2, SK.green, 'left', 400);
+      addHot('codex_card_' + i, x, y, cw, ch, null, codexType(key).name + '\n' + (codexType(key).desc || '') + '\n' + codexTraits(key).join(' · ') + '\n' + codexWeak(key));
+    } else {
+      skText('？', x + 22, y + 38, 19, 'rgba(150,170,180,.35)', 'center', 500);
+      skText('未发现', x + 46, y + 22, 8, 'rgba(160,170,180,.42)', 'left', 400);
+      skText(d.short, x + 46, y + 38, 6.8, 'rgba(160,170,180,.3)', 'left', 400);
+      addHot('codex_card_' + i, x, y, cw, ch, null, '未发现 · 在该维度击败后解锁');
+    }
+  }
+  skLink('codex_back', '返回星图', 70, 584, 10, SK.paperDim, () => closeBestiary(), '返回上一页');
+}
+
+/* ---- 覆盖层：render / skChapters / confirmLoadout ---- */
+const _codexChapters = skChapters;
+skChapters = function(){
+  _codexChapters();
+  skLink('codex_open', '怪物图鉴', 760, 44, 10, SK.goldDim, () => openBestiary(), '查看所有维度的敌人');
+};
+
+const _codexConfirm = confirmLoadout;
+confirmLoadout = function(){
+  const r = _codexConfirm();
+  if (r) codexBriefing();
+  return r;
+};
+
+const _codexRender = render;
+render = function(){
+  const g = game;
+  if (g && (g.state === 'codex' || g.state === 'briefing')) {
+    g.hotspots = [];
+    g.hoverHot = null;
+    drawWorld(g.clock);
+    fullBlock(0);
+    if (g.state === 'codex') drawCodex();
+    else drawBriefing();
+    return;
+  }
+  _codexRender();
+};
+
+if (typeof window !== 'undefined' && window.__AG) {
+  window.__AG.confirmLoadout = confirmLoadout;
+  window.__AG.codexOpen = openBestiary;
+  window.__AG.codexClose = closeBestiary;
+  window.__AG.briefingNext = codexNext;
+  window.__AG.briefingSkip = codexSkip;
+  window.__AG.codexSeen = () => codexSeen().slice();
+}
 </script>
 </body>
 </html>
