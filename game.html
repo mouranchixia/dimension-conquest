@@ -6590,7 +6590,8 @@ function towCore(c, x, y, r, pulse){
 }
 
 /* Level evolution: each upgrade adds real hardware, not just a number. */
-function towerEvo(def, lv, tt, rc){
+function towerEvo(def, lv, tt, rc, branch){
+  if (typeof towerEvoIdentity === 'function') { towerEvoIdentity(def, lv, tt, rc, branch); return; }
   if (lv <= 1) return;
   const c = def.color;
   const pulse = .5 + .5 * Math.sin(tt * 3.2);
@@ -6922,7 +6923,7 @@ function towerTurretArt(def, recoil, t){
     ctx.fillStyle = rgba(c, .6); poly(2, 0, 8, 5, 0); ctx.fill();
     ctx.strokeStyle = rgba('#dffcff', .45); ctx.stroke();
   }
-  towerEvo(def, lv, tt, rc);
+  towerEvo(def, lv, tt, rc, t && t.branch);
   ctx.restore();
 }
 
@@ -10823,6 +10824,87 @@ if (typeof window !== 'undefined' && window.__AG) {
     }
     ctx.restore();
   }
+  function evoArm(kind, c, sy, h, tt){
+    ctx.save();
+    ctx.strokeStyle = rgba(c, .82); ctx.fillStyle = 'rgba(8,22,35,.9)'; ctx.lineWidth = 1;
+    if (kind === 'twin'){ for (const o of [-2.5, 2.5]){ ctx.beginPath(); ctx.rect(-24, sy*13+o-1.2, 15, 2.4); ctx.fill(); ctx.stroke(); } }
+    else if (kind === 'flame'){ for (let i=0;i<3;i++){ ctx.beginPath(); ctx.moveTo(-16-i*3, sy*11); ctx.quadraticCurveTo(-27-i*3, sy*11-6, -19-i*3, sy*17); ctx.stroke(); } }
+    else if (kind === 'shard'){ for (let i=0;i<3;i++){ ctx.beginPath(); ctx.moveTo(-17-i*4, sy*10); ctx.lineTo(-24-i*4, sy*16-4); ctx.lineTo(-14-i*4, sy*18); ctx.closePath(); ctx.fill(); ctx.stroke(); } }
+    else if (kind === 'arc' || kind === 'coil'){ for (let i=0;i<2;i++){ ctx.beginPath(); ctx.arc(-18, sy*11, 5+i*3, 0, Math.PI*2); ctx.stroke(); } }
+    else if (kind === 'fan'){ for (let i=-1;i<=1;i++){ ctx.beginPath(); ctx.moveTo(-12, sy*10); ctx.lineTo(-25, sy*10+i*5); ctx.stroke(); } }
+    else if (kind === 'shell'){ ctx.beginPath(); ctx.rect(-25, sy*10-3, 14, 6); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(-25, sy*10, 2, 0, Math.PI*2); ctx.stroke(); }
+    else if (kind === 'sun'){ for (let i=0;i<4;i++){ ctx.beginPath(); ctx.moveTo(-13, sy*10); ctx.lineTo(-24, sy*10 + Math.sin(i*1.7)*7); ctx.stroke(); } }
+    else if (kind === 'drone' || kind === 'pods'){ for (let i=0;i<2;i++){ ctx.beginPath(); ctx.arc(-18-i*6, sy*11, 3, 0, Math.PI*2); ctx.fill(); ctx.stroke(); } }
+    else if (kind === 'blade'){ ctx.beginPath(); ctx.moveTo(-10, sy*8); ctx.lineTo(-28, sy*17); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.moveTo(-10, sy*9); ctx.lineTo(-25-h%4, sy*15); ctx.lineTo(-10, sy*17); ctx.stroke(); }
+    ctx.restore();
+  }
+  function towerEvoIdentity(def, lv, tt, rc, branch){
+    if (lv <= 1) return;
+    const c = def.color || '#8fe8ff';
+    const k = SIG[def['key']];
+    let h = 0; const kk = def['key'];
+    for (let i=0;i<kk.length;i++) h = (h*31 + kk.charCodeAt(i)) % 997;
+    ctx.save();
+    /* Lv2 — twin turbine rings, per-tower offset */
+    if (lv >= 2){
+      for (const sy of [-1,1]){
+        ctx.save(); ctx.translate(-8, sy*10); ctx.rotate(tt*.8*sy);
+        ctx.strokeStyle = rgba(c,.72); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(0,0,3.6 + (h%3), 0, Math.PI*2); ctx.stroke();
+        for (let i=0;i<3;i++){ const a=i*Math.PI*2/3; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*7, Math.sin(a)*7); ctx.stroke(); }
+        ctx.restore();
+      }
+    }
+    /* Lv3 — branch-specific asymmetrical module */
+    if (lv >= 3 && branch){
+      const m = branch.mods || {};
+      let bk = 'spike';
+      if (m.chain || m.stun) bk = 'coil';
+      else if (m.slow) bk = 'shard';
+      else if (m.burn) bk = 'flame';
+      else if (m.splash) bk = 'shell';
+      else if (m.auraDmg || m.auraRate) bk = 'fan';
+      else if (m.rate) bk = 'twin';
+      const gold = '#ffd166';
+      ctx.strokeStyle = rgba(gold,.9); ctx.fillStyle = 'rgba(52,35,12,.92)'; ctx.lineWidth = 1.2;
+      ctx.save(); ctx.translate(-13, 12); ctx.rotate(-.25);
+      if (bk === 'coil'){ for (let i=0;i<2;i++){ ctx.beginPath(); ctx.arc(0,0,4+i*3,0,Math.PI*2); ctx.stroke(); } }
+      else if (bk === 'shard'){ ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(5,7); ctx.lineTo(-5,7); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+      else if (bk === 'flame'){ ctx.beginPath(); ctx.moveTo(0,-9); ctx.quadraticCurveTo(8,0,0,8); ctx.quadraticCurveTo(-8,0,0,-9); ctx.stroke(); }
+      else if (bk === 'shell'){ ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill(); ctx.stroke(); }
+      else if (bk === 'twin'){ for (const o of [-2.5,2.5]){ ctx.beginPath(); ctx.rect(-6,o-1.4,12,2.8); ctx.fill(); ctx.stroke(); } }
+      else if (bk === 'fan'){ for (let i=-1;i<=1;i++){ ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(8+i*3,-8); ctx.stroke(); } }
+      else { ctx.beginPath(); ctx.moveTo(-7,7); ctx.lineTo(0,-9); ctx.lineTo(7,7); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+      ctx.restore();
+    }
+    /* Lv4 — two signature outriggers */
+    if (lv >= 4){
+      evoArm(k, c, -1, h, tt);
+      evoArm(k, c, 1, h, tt);
+    }
+    /* Lv5 — unique halo + orbit nodes */
+    if (lv >= 5){
+      ctx.strokeStyle = rgba(c,.7); ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(0,0,24, -.6 + tt*.18, 1.7 + tt*.18); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0,0,24, Math.PI-.6 - tt*.14, Math.PI+1.7 - tt*.14); ctx.stroke();
+      for (let i=0;i<6;i++){
+        const a = tt*.5 + i*Math.PI/3, rr = 25;
+        const x = Math.cos(a)*rr, y = Math.sin(a)*rr;
+        ctx.save(); ctx.translate(x,y); ctx.rotate(a);
+        ctx.fillStyle = i%2 ? '#ffe6a0' : rgba(c,.95);
+        if (k === 'star' || k === 'crown' || k === 'cross'){
+          ctx.beginPath(); ctx.moveTo(3,0); ctx.lineTo(-2,2.2); ctx.lineTo(-2,-2.2); ctx.closePath(); ctx.fill();
+        } else {
+          ctx.beginPath(); ctx.arc(0,0,1.8,0,Math.PI*2); ctx.fill();
+        }
+        ctx.restore();
+      }
+      ctx.strokeStyle = rgba('#ffe6a0', .7); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(-9,-18); ctx.lineTo(-15,-25); ctx.moveTo(9,-18); ctx.lineTo(15,-25); ctx.stroke();
+    }
+    ctx.restore();
+  }
   const baseEmblem = drawTowerEmblem;
   drawTowerEmblem = function(ti, cx, cy, s, aim, level){
     const d = TOWERS[ti];
@@ -10875,6 +10957,7 @@ if (typeof window !== 'undefined' && window.__AG) {
     try { const ty = t && t.type; if (t && target && ty && ty['arch'] !== 'support') towerAttackFx(t, target, towerStats(t)); } catch(e) {}
     return baseFire(t, target);
   };
+  window.towerEvoIdentity = towerEvoIdentity;
   window.__AG_TOWER_ID = { sig: SIG, fx: FX };
 })();
 /* 19_bgm.js — procedural lobby / galaxy / endless background music */
